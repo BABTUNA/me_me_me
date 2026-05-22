@@ -1,0 +1,38 @@
+---
+title: "On building small, sharp tools"
+date: "2026-04-10"
+summary: "A short defense of the 100-line script and the single-purpose app."
+tags: ["craft", "tools"]
+---
+
+The best tool I built last year was 80 lines of Python. It does one thing.
+It does it fast. I use it every day.
+
+I keep meaning to "make it a proper project" — add config, plugins, tests.
+Every time I try, the tool gets worse.
+
+## The case for small
+
+A small tool is legible. You can read it in one sitting, hold it in your
+head, change it without ceremony. Bugs surface immediately because there
+isn't anywhere for them to hide.
+
+A small tool is also honest. It doesn't pretend to be more than it is.
+It doesn't ask you to learn a framework just to do a thing.
+
+## When small breaks down
+
+Small breaks when the problem genuinely *is* big. A scheduler isn't a
+script. A database isn't a script. Don't write a small tool when you need
+a system.
+
+But most of the time, you don't need a system. You need a script. The
+mistake is reaching for the system reflexively.
+
+## A rule of thumb
+
+> If you can't explain what the tool does in one sentence, it's already
+> too big.
+
+I'm trying to write more small things. Most of them won't be a big deal.
+That's fine. The point is the small.
