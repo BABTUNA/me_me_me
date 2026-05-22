@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
+import { Globe } from "@/components/globe";
 import { projects } from "@/content/projects";
 import { getAllPosts } from "@/lib/posts";
 
@@ -37,6 +38,30 @@ export default function HomePage() {
               Read the blog <Arrow />
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* GLOBE — interactive dotted world */}
+      <section className="relative border-b border-[var(--color-border)] overflow-hidden">
+        <div className="grid-bg absolute inset-0 pointer-events-none opacity-40" />
+        <div className="relative mx-auto grid max-w-6xl gap-12 px-6 py-20 sm:py-28 md:grid-cols-2 md:items-center">
+          <div>
+            <div className="num mb-6">/ interlude — the world</div>
+            <h2 className="text-3xl font-medium leading-tight tracking-tight sm:text-5xl">
+              The internet is a
+              <br />
+              <span className="text-[var(--color-accent)]">small place</span>.
+            </h2>
+            <p className="mt-6 max-w-md text-[var(--color-fg-muted)]">
+              Reachable from anywhere with a connection. I&apos;ve worked with
+              people across the world and built things that quietly land on
+              other people&apos;s screens at all hours of the day.
+            </p>
+            <p className="mt-4 max-w-md font-mono text-xs text-[var(--color-fg-dim)]">
+              drag to spin · auto-rotates when idle
+            </p>
+          </div>
+          <Globe />
         </div>
       </section>
 
