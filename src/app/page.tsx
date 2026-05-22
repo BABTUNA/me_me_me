@@ -41,27 +41,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* GLOBE — interactive dotted world */}
-      <section className="relative border-b border-[var(--color-border)] overflow-hidden">
-        <div className="grid-bg absolute inset-0 pointer-events-none opacity-40" />
-        <div className="relative mx-auto grid max-w-6xl gap-12 px-6 py-20 sm:py-28 md:grid-cols-2 md:items-center">
-          <div>
-            <div className="num mb-6">/ interlude — the world</div>
-            <h2 className="text-3xl font-medium leading-tight tracking-tight sm:text-5xl">
-              The internet is a
-              <br />
-              <span className="text-[var(--color-accent)]">small place</span>.
-            </h2>
-            <p className="mt-6 max-w-md text-[var(--color-fg-muted)]">
-              Reachable from anywhere with a connection. I&apos;ve worked with
-              people across the world and built things that quietly land on
-              other people&apos;s screens at all hours of the day.
-            </p>
-            <p className="mt-4 max-w-md font-mono text-xs text-[var(--color-fg-dim)]">
-              drag to spin · auto-rotates when idle
-            </p>
+      {/* GLOBE — browse.sh-style cream card */}
+      <section className="border-b border-[var(--color-border)] bg-[var(--color-bg)] py-16 sm:py-24">
+        <div className="mx-auto max-w-6xl px-6">
+          <div
+            className="relative overflow-hidden rounded-2xl border border-black/10 px-8 py-10 sm:px-12 sm:py-14"
+            style={{ backgroundColor: "#f4eee4", color: "#1a1a1a" }}
+          >
+            <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-start sm:gap-10">
+              <Globe />
+
+              <div className="flex-1">
+                <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em] text-black/50">
+                  / the open web
+                </div>
+                <h2 className="max-w-xl text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
+                  Built on, and for, the
+                  <br />
+                  <span className="text-[#c8266b]">open internet</span>.
+                </h2>
+                <p className="mt-5 max-w-lg text-sm leading-relaxed text-black/70 sm:text-base">
+                  Everything here ships to the same network anyone with a
+                  browser can reach. No paywalls, no logins, no dark patterns
+                  — just static pages and quiet tools.
+                </p>
+                <p className="mt-4 font-mono text-[11px] text-black/40">
+                  drag the globe to spin · auto-rotates when idle
+                </p>
+              </div>
+            </div>
           </div>
-          <Globe />
         </div>
       </section>
 
