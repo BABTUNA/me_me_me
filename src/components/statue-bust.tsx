@@ -3,7 +3,14 @@
 import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Center, useGLTF, Environment } from "@react-three/drei";
-import type { Group } from "three";
+import {
+  EffectComposer,
+  Glitch,
+  ChromaticAberration,
+  Noise,
+} from "@react-three/postprocessing";
+import { BlendFunction, GlitchMode } from "postprocessing";
+import { Vector2, type Group } from "three";
 
 const MODEL_URL = "/models/bust-hi.glb";
 
@@ -28,7 +35,8 @@ type StatueBustProps = {
 };
 
 /**
- * Decorative 3D Greek bust. Transparent canvas — blends seamlessly into the page.
+ * Decorative 3D Greek bust with subtle glitch + chromatic aberration aura.
+ * Transparent canvas — blends into the page background.
  */
 export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
   return (
@@ -46,7 +54,6 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
         }}
         dpr={[1, 2]}
         onCreated={({ gl, scene }) => {
-          // Force a fully transparent clear so the canvas blends into the page bg
           gl.setClearColor(0x000000, 0);
           gl.setClearAlpha(0);
           scene.background = null;
@@ -72,6 +79,31 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
             <Bust scale={0.7} />
           </Center>
         </Suspense>
+
+        <EffectComposer multisampling={0} enableNormalPass={false}>
+          {/* Constant subtle RGB fringe — cyberpunk hum */}
+          <ChromaticAberration
+            offset={new Vector2(0.0025, 0.0018)}
+            radialModulation={false}
+            modulationOffset={0}
+            blendFunction={BlendFunction.NORMAL}
+          />
+          {/* Sporadic glitch tear — 2–6s between, brief and mild */}
+          <Glitch
+            delay={new Vector2(2.5, 6)}
+            duration={new Vector2(0.1, 0.3)}
+            strength={new Vector2(0.15, 0.45)}
+            mode={GlitchMode.SPORADIC}
+            active
+            ratio={0.6}
+          />
+          {/* Light film noise */}
+          <Noise
+            premultiply
+            opacity={0.18}
+            blendFunction={BlendFunction.SOFT_LIGHT}
+          />
+        </EffectComposer>
       </Canvas>
     </div>
   );
