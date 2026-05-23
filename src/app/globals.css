@@ -9,17 +9,17 @@
 /* LIGHT THEME — default */
 :root,
 [data-theme="light"] {
-  --color-bg: #fafaf7;
-  --color-surface: #f1f1ec;
-  --color-surface-elev: #e8e8e2;
-  --color-border: #e5e3dc;
-  --color-border-strong: #c9c7be;
-  --color-fg: #0e0e0c;
-  --color-fg-muted: #5a5a55;
-  --color-fg-dim: #908d83;
+  --color-bg: #ffffff;
+  --color-surface: #f6f6f6;
+  --color-surface-elev: #ededed;
+  --color-border: #e8e8e8;
+  --color-border-strong: #cfcfcf;
+  --color-fg: #0a0a0a;
+  --color-fg-muted: #555555;
+  --color-fg-dim: #8a8a8a;
   --color-accent: #d11963;
   --color-accent-soft: #d1196333;
-  --color-grid-line: rgba(0, 0, 0, 0.04);
+  --color-grid-line: rgba(0, 0, 0, 0.045);
   color-scheme: light;
 }
 
