@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
+import { StatueBust } from "@/components/statue-bust";
 import { getAllPosts } from "@/lib/posts";
 
 export const metadata = {
@@ -25,11 +26,14 @@ export default function BlogIndexPage() {
       <section className="border-b border-[var(--color-border)]">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="num mb-6">/ blog — index</div>
-          <h1 className="max-w-3xl text-4xl font-medium tracking-tight sm:text-6xl">
-            Notes from the
-            <br />
-            <span className="text-[var(--color-accent)]">workshop</span>.
-          </h1>
+          <div className="flex items-start gap-6 sm:gap-10">
+            <h1 className="max-w-3xl flex-1 text-4xl font-medium tracking-tight sm:text-6xl">
+              Notes from the
+              <br />
+              <span className="text-[var(--color-accent)]">workshop</span>.
+            </h1>
+            <StatueBust size={160} className="hidden shrink-0 sm:block" />
+          </div>
           <p className="mt-6 max-w-xl text-[var(--color-fg-muted)]">
             Essays, debugging stories, and short notes. Roughly in reverse
             chronological order — newest at the top.
