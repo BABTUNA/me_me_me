@@ -49,27 +49,43 @@ export default function HomePage() {
       <section className="border-b border-[var(--color-border)] bg-[var(--color-bg)] py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div
-            className="relative overflow-hidden rounded-2xl border border-black/10 px-8 py-10 sm:px-12 sm:py-14"
-            style={{ backgroundColor: "#f4eee4", color: "#1a1a1a" }}
+            className="relative overflow-hidden rounded-2xl border px-8 py-10 sm:px-12 sm:py-14"
+            style={{
+              backgroundColor: "var(--globe-card-bg)",
+              color: "var(--globe-card-fg)",
+              borderColor: "var(--globe-card-border)",
+            }}
           >
             <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-start sm:gap-10">
               <Globe />
 
               <div className="flex-1">
-                <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em] text-black/50">
+                <div
+                  className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em]"
+                  style={{ color: "var(--globe-card-fg-dim)" }}
+                >
                   / the open web
                 </div>
                 <h2 className="max-w-xl text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
                   Built on, and for, the
                   <br />
-                  <span className="text-[#c8266b]">open internet</span>.
+                  <span style={{ color: "var(--globe-card-accent)" }}>
+                    open internet
+                  </span>
+                  .
                 </h2>
-                <p className="mt-5 max-w-lg text-sm leading-relaxed text-black/70 sm:text-base">
+                <p
+                  className="mt-5 max-w-lg text-sm leading-relaxed sm:text-base"
+                  style={{ color: "var(--globe-card-fg-muted)" }}
+                >
                   Everything here ships to the same network anyone with a
                   browser can reach. No paywalls, no logins, no dark patterns
                   — just static pages and quiet tools.
                 </p>
-                <p className="mt-4 font-mono text-[11px] text-black/40">
+                <p
+                  className="mt-4 font-mono text-[11px]"
+                  style={{ color: "var(--globe-card-fg-dim)" }}
+                >
                   drag the globe to spin · auto-rotates when idle
                 </p>
               </div>

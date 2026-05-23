@@ -20,6 +20,13 @@
   --color-accent: #d11963;
   --color-accent-soft: #d1196333;
   --color-grid-line: rgba(0, 0, 0, 0.045);
+  /* The globe section card — light bg required for mix-blend-mode: multiply */
+  --globe-card-bg: #ffffff;
+  --globe-card-fg: #0a0a0a;
+  --globe-card-fg-muted: rgba(0, 0, 0, 0.65);
+  --globe-card-fg-dim: rgba(0, 0, 0, 0.4);
+  --globe-card-accent: #d11963;
+  --globe-card-border: #e8e8e8;
   color-scheme: light;
 }
 
@@ -36,6 +43,13 @@
   --color-accent: #ff2a6d;
   --color-accent-soft: #ff2a6d33;
   --color-grid-line: rgba(255, 255, 255, 0.025);
+  /* In dark mode the globe card stays cream — intentional artifact */
+  --globe-card-bg: #f4eee4;
+  --globe-card-fg: #1a1a1a;
+  --globe-card-fg-muted: rgba(0, 0, 0, 0.65);
+  --globe-card-fg-dim: rgba(0, 0, 0, 0.4);
+  --globe-card-accent: #c8266b;
+  --globe-card-border: rgba(0, 0, 0, 0.12);
   color-scheme: dark;
 }
 
