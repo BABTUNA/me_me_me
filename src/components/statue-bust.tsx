@@ -2,17 +2,17 @@
 
 import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Center, useGLTF } from "@react-three/drei";
+import { Center, useGLTF, Environment } from "@react-three/drei";
 import type { Group } from "three";
 
-const MODEL_URL = "/models/bust-lo.glb";
+const MODEL_URL = "/models/bust-hi.glb";
 
 function Bust({ scale = 1 }: { scale?: number }) {
   const { scene } = useGLTF(MODEL_URL);
   const ref = useRef<Group>(null);
 
   useFrame((_, dt) => {
-    if (ref.current) ref.current.rotation.y += dt * 0.18;
+    if (ref.current) ref.current.rotation.y += dt * 0.15;
   });
 
   return (
@@ -28,10 +28,10 @@ type StatueBustProps = {
 };
 
 /**
- * Small 3D Greek bust used as a decorative aura element next to page titles.
- * Auto-rotates. Renders the low-res draco GLB for snappy load.
+ * Decorative 3D Greek bust. Auto-rotates. Renders to a transparent canvas
+ * so it blends naturally against the page background.
  */
-export function StatueBust({ size = 160, className = "" }: StatueBustProps) {
+export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
   return (
     <div
       className={className}
@@ -39,23 +39,35 @@ export function StatueBust({ size = 160, className = "" }: StatueBustProps) {
       aria-hidden
     >
       <Canvas
-        camera={{ position: [0, 0, 3.2], fov: 32 }}
+        camera={{ position: [0, 0, 3.2], fov: 30 }}
         gl={{ alpha: true, antialias: true, preserveDrawingBuffer: false }}
         dpr={[1, 2]}
         style={{ background: "transparent" }}
       >
-        {/* Cool monochrome key + warm magenta rim */}
-        <ambientLight intensity={0.35} />
-        <directionalLight position={[5, 5, 5]} intensity={1.4} />
+        {/* Dim ambient — keeps shadows real */}
+        <ambientLight intensity={0.15} />
+
+        {/* Cool key from upper-right */}
+        <directionalLight position={[4, 6, 4]} intensity={2.2} color="#e8eaf0" />
+
+        {/* Warm magenta rim from behind-left */}
         <directionalLight
-          position={[-4, 2, -3]}
-          intensity={0.9}
+          position={[-5, 2, -4]}
+          intensity={1.6}
           color="#ff2a6d"
         />
-        <directionalLight position={[0, -4, 2]} intensity={0.25} color="#88a" />
+
+        {/* Subtle fill from below */}
+        <directionalLight
+          position={[0, -3, 2]}
+          intensity={0.3}
+          color="#5a6a8a"
+        />
+
         <Suspense fallback={null}>
+          <Environment preset="city" environmentIntensity={0.25} />
           <Center>
-            <Bust scale={1.6} />
+            <Bust scale={1.8} />
           </Center>
         </Suspense>
       </Canvas>
