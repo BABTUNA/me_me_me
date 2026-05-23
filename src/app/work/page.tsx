@@ -17,8 +17,9 @@ const statusLabel: Record<string, string> = {
 export default function WorkPage() {
   return (
     <>
-      <section className="border-b border-[var(--color-border)]">
-        <div className="mx-auto max-w-6xl px-6 py-20">
+      <section className="relative border-b border-[var(--color-border)]">
+        <div className="grid-bg absolute inset-0 pointer-events-none" />
+        <div className="relative mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <div className="num mb-6">/ work — index</div>
           <div className="flex items-center gap-6 sm:gap-10">
             <h1 className="max-w-3xl flex-1 text-4xl font-medium tracking-tight sm:text-6xl">
