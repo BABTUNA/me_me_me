@@ -16,7 +16,7 @@ export default function HomePage() {
         <div className="grid-bg absolute inset-0 pointer-events-none" />
         <div className="relative mx-auto max-w-6xl px-6 py-28 sm:py-36">
           <div className="num mb-6">/ 01 — index</div>
-          <div className="flex items-start gap-6 sm:gap-10">
+          <div className="flex items-center gap-6 sm:gap-10">
             <h1 className="max-w-3xl flex-1 text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
               building small,
               <br />
@@ -24,7 +24,7 @@ export default function HomePage() {
               <br />
               the <span className="text-[var(--color-accent)]">internet</span>.
             </h1>
-            <StatueBust size={440} className="hidden shrink-0 lg:block" />
+            <StatueBust size={580} className="hidden shrink-0 lg:block" />
           </div>
           <p className="mt-8 max-w-xl text-base text-[var(--color-fg-muted)] sm:text-lg">
             I&apos;m Ben — engineer, writer, and serial side-project enjoyer.
