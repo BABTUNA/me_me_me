@@ -7,7 +7,6 @@ import {
   EffectComposer,
   Glitch,
   ChromaticAberration,
-  Noise,
 } from "@react-three/postprocessing";
 import { BlendFunction, GlitchMode } from "postprocessing";
 import { Vector2, type Group } from "three";
@@ -74,21 +73,18 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
         />
 
         <Suspense fallback={null}>
-          <Environment preset="city" environmentIntensity={0.25} />
           <Center>
             <Bust scale={0.7} />
           </Center>
         </Suspense>
 
         <EffectComposer multisampling={0} enableNormalPass={false}>
-          {/* Constant subtle RGB fringe — cyberpunk hum */}
           <ChromaticAberration
             offset={new Vector2(0.0025, 0.0018)}
             radialModulation={false}
             modulationOffset={0}
             blendFunction={BlendFunction.NORMAL}
           />
-          {/* Sporadic glitch tear — 2–6s between, brief and mild */}
           <Glitch
             delay={new Vector2(2.5, 6)}
             duration={new Vector2(0.1, 0.3)}
@@ -96,12 +92,6 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
             mode={GlitchMode.SPORADIC}
             active
             ratio={0.6}
-          />
-          {/* Light film noise */}
-          <Noise
-            premultiply
-            opacity={0.18}
-            blendFunction={BlendFunction.SOFT_LIGHT}
           />
         </EffectComposer>
       </Canvas>
