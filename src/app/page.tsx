@@ -14,17 +14,17 @@ export default function HomePage() {
       {/* HERO */}
       <section className="relative border-b border-[var(--color-border)]">
         <div className="grid-bg absolute inset-0 pointer-events-none" />
-        <div className="relative mx-auto max-w-6xl px-6 py-24 sm:py-32">
+        <div className="relative mx-auto max-w-6xl px-6 py-28 sm:py-36">
           <div className="num mb-6">/ 01 — index</div>
           <div className="flex items-center gap-6 sm:gap-10">
-            <h1 className="max-w-3xl flex-1 text-4xl font-medium leading-[1.05] tracking-tight sm:text-6xl">
+            <h1 className="max-w-3xl flex-1 text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
               building small,
               <br />
               sharp things on
               <br />
               the <span className="text-[var(--color-accent)]">internet</span>.
             </h1>
-            <StatueBust size={420} className="hidden shrink-0 lg:block" />
+            <StatueBust size={480} className="hidden shrink-0 lg:block" />
           </div>
           <p className="mt-8 max-w-xl text-base text-[var(--color-fg-muted)] sm:text-lg">
             I&apos;m Ben — engineer, writer, and serial side-project enjoyer.
