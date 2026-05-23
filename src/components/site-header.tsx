@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "./theme-toggle";
 
 const nav = [
   { href: "/", label: "Home" },
@@ -29,6 +30,8 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
+          <span className="mx-2 h-4 w-px bg-[var(--color-border)]" />
+          <ThemeToggle />
         </nav>
       </div>
     </header>
