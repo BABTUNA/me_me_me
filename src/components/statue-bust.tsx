@@ -28,8 +28,7 @@ type StatueBustProps = {
 };
 
 /**
- * Decorative 3D Greek bust. Auto-rotates. Renders to a transparent canvas
- * so it blends naturally against the page background.
+ * Decorative 3D Greek bust. Transparent canvas — blends seamlessly into the page.
  */
 export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
   return (
@@ -39,25 +38,28 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
       aria-hidden
     >
       <Canvas
-        camera={{ position: [0, 0, 3.2], fov: 30 }}
-        gl={{ alpha: true, antialias: true, preserveDrawingBuffer: false }}
+        camera={{ position: [0, 0, 6], fov: 35 }}
+        gl={{
+          alpha: true,
+          antialias: true,
+          premultipliedAlpha: false,
+        }}
         dpr={[1, 2]}
+        onCreated={({ gl, scene }) => {
+          // Force a fully transparent clear so the canvas blends into the page bg
+          gl.setClearColor(0x000000, 0);
+          gl.setClearAlpha(0);
+          scene.background = null;
+        }}
         style={{ background: "transparent" }}
       >
-        {/* Dim ambient — keeps shadows real */}
-        <ambientLight intensity={0.15} />
-
-        {/* Cool key from upper-right */}
-        <directionalLight position={[4, 6, 4]} intensity={2.2} color="#e8eaf0" />
-
-        {/* Warm magenta rim from behind-left */}
+        <ambientLight intensity={0.18} />
+        <directionalLight position={[4, 6, 4]} intensity={2.0} color="#e8eaf0" />
         <directionalLight
           position={[-5, 2, -4]}
-          intensity={1.6}
+          intensity={1.5}
           color="#ff2a6d"
         />
-
-        {/* Subtle fill from below */}
         <directionalLight
           position={[0, -3, 2]}
           intensity={0.3}
@@ -67,7 +69,7 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
         <Suspense fallback={null}>
           <Environment preset="city" environmentIntensity={0.25} />
           <Center>
-            <Bust scale={1.8} />
+            <Bust scale={0.95} />
           </Center>
         </Suspense>
       </Canvas>
