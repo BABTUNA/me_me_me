@@ -44,7 +44,7 @@ export default function AboutPage() {
                 I build things.
               </span>
             </h1>
-            <StatueBust size={500} className="hidden shrink-0 lg:block" />
+            <StatueBust size={420} className="hidden shrink-0 lg:block" />
           </div>
         </div>
       </section>
