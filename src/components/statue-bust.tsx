@@ -38,7 +38,7 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
       aria-hidden
     >
       <Canvas
-        camera={{ position: [0, 0, 6], fov: 35 }}
+        camera={{ position: [0, 0, 10], fov: 35 }}
         gl={{
           alpha: true,
           antialias: true,
@@ -69,7 +69,7 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
         <Suspense fallback={null}>
           <Environment preset="city" environmentIntensity={0.25} />
           <Center>
-            <Bust scale={0.95} />
+            <Bust scale={0.7} />
           </Center>
         </Suspense>
       </Canvas>
