@@ -24,7 +24,7 @@ export default function HomePage() {
               <br />
               the <span className="text-[var(--color-accent)]">internet</span>.
             </h1>
-            <StatueBust size={180} className="hidden shrink-0 sm:block" />
+            <StatueBust size={300} className="hidden shrink-0 lg:block" />
           </div>
           <p className="mt-8 max-w-xl text-base text-[var(--color-fg-muted)] sm:text-lg">
             I&apos;m Ben — engineer, writer, and serial side-project enjoyer.

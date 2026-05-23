@@ -28,7 +28,7 @@ export default function WorkPage() {
               <br />
               <span className="text-[var(--color-accent)]">shipped</span>.
             </h1>
-            <StatueBust size={160} className="hidden shrink-0 sm:block" />
+            <StatueBust size={260} className="hidden shrink-0 lg:block" />
           </div>
           <p className="mt-6 max-w-xl text-[var(--color-fg-muted)]">
             A running list of side projects, contributions, and experiments.
