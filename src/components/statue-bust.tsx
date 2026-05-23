@@ -64,7 +64,7 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
         <directionalLight
           position={[-5, 2, -4]}
           intensity={1.5}
-          color="#ff2a6d"
+          color="#ff10f0"
         />
         <directionalLight
           position={[0, -3, 2]}
