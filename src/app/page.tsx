@@ -1,3 +1,4 @@
+import { preload } from "react-dom";
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
 import { BinaryBackground } from "@/components/binary-background";
@@ -5,6 +6,9 @@ import { Globe } from "@/components/globe";
 import { StatueBust } from "@/components/statue-bust";
 import { projects } from "@/content/projects";
 import { getAllPosts } from "@/lib/posts";
+
+// Kick off the GLB fetch during HTML parse — the bust appears much faster.
+preload("/models/rossbandiger.glb", { as: "fetch", crossOrigin: "anonymous" });
 
 export default function HomePage() {
   const featured = projects.slice(0, 3);

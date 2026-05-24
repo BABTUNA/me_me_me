@@ -1,8 +1,11 @@
+import { preload } from "react-dom";
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
 import { BinaryBackground } from "@/components/binary-background";
 import { StatueBust } from "@/components/statue-bust";
 import { projects } from "@/content/projects";
+
+preload("/models/apollo.glb", { as: "fetch", crossOrigin: "anonymous" });
 
 export const metadata = {
   title: "Work",
