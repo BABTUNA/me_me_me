@@ -29,8 +29,7 @@ export default function BlogIndexPage() {
     <>
       <section className="relative border-b border-[var(--color-border)]">
         <BinaryBackground seed={202} />
-        <div className="relative mx-auto max-w-6xl px-6 py-28 sm:py-36">
-          <div className="num mb-6">/ blog — index</div>
+        <div className="relative mx-auto max-w-6xl px-6 pt-12 pb-24 sm:pt-16 sm:pb-32">
           <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
             Notes from the
             <br />
