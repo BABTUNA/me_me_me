@@ -2,7 +2,6 @@ import { preload } from "react-dom";
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
 import { BinaryBackground } from "@/components/binary-background";
-import { Globe } from "@/components/globe";
 import { StatueBust } from "@/components/statue-bust";
 import { projects } from "@/content/projects";
 import { getAllPosts } from "@/lib/posts";
@@ -50,55 +49,6 @@ export default function HomePage() {
             >
               Read the blog <Arrow />
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* GLOBE — browse.sh-style cream card */}
-      <section className="border-b border-[var(--color-border)] bg-[var(--color-bg)] py-16 sm:py-24">
-        <div className="mx-auto max-w-6xl px-6">
-          <div
-            className="relative overflow-hidden rounded-2xl border px-8 py-10 sm:px-12 sm:py-14"
-            style={{
-              backgroundColor: "var(--globe-card-bg)",
-              color: "var(--globe-card-fg)",
-              borderColor: "var(--globe-card-border)",
-            }}
-          >
-            <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-start sm:gap-10">
-              <Globe />
-
-              <div className="flex-1">
-                <div
-                  className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em]"
-                  style={{ color: "var(--globe-card-fg-dim)" }}
-                >
-                  / the open web
-                </div>
-                <h2 className="max-w-xl text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
-                  Built on, and for, the
-                  <br />
-                  <span style={{ color: "var(--globe-card-accent)" }}>
-                    open internet
-                  </span>
-                  .
-                </h2>
-                <p
-                  className="mt-5 max-w-lg text-sm leading-relaxed sm:text-base"
-                  style={{ color: "var(--globe-card-fg-muted)" }}
-                >
-                  Everything here ships to the same network anyone with a
-                  browser can reach. No paywalls, no logins, no dark patterns
-                  — just static pages and quiet tools.
-                </p>
-                <p
-                  className="mt-4 font-mono text-[11px]"
-                  style={{ color: "var(--globe-card-fg-dim)" }}
-                >
-                  drag the globe to spin · auto-rotates when idle
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
