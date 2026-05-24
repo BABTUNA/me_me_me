@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
+import { BinaryBackground } from "@/components/binary-background";
 import { StatueBust } from "@/components/statue-bust";
 import { getAllPosts } from "@/lib/posts";
 
@@ -24,7 +25,7 @@ export default function BlogIndexPage() {
   return (
     <>
       <section className="relative border-b border-[var(--color-border)]">
-        <div className="grid-bg absolute inset-0 pointer-events-none" />
+        <BinaryBackground seed={202} />
         <div className="relative mx-auto max-w-6xl px-6 py-28 sm:py-36">
           <div className="num mb-6">/ blog — index</div>
           <div className="flex items-center gap-6 sm:gap-10">
