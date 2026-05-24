@@ -2,7 +2,7 @@
 
 import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Center, useGLTF, Environment } from "@react-three/drei";
+import { Center, useGLTF } from "@react-three/drei";
 import {
   EffectComposer,
   Glitch,
@@ -11,10 +11,10 @@ import {
 import { BlendFunction, GlitchMode } from "postprocessing";
 import { Vector2, type Group } from "three";
 
-const MODEL_URL = "/models/bust-hi.glb";
+const DEFAULT_MODEL = "/models/bust-hi.glb";
 
-function Bust({ scale = 1 }: { scale?: number }) {
-  const { scene } = useGLTF(MODEL_URL);
+function Model({ url, scale = 1 }: { url: string; scale?: number }) {
+  const { scene } = useGLTF(url);
   const ref = useRef<Group>(null);
 
   useFrame((_, dt) => {
@@ -31,13 +31,25 @@ function Bust({ scale = 1 }: { scale?: number }) {
 type StatueBustProps = {
   size?: number;
   className?: string;
+  /** GLB model URL. Defaults to the marble bust. */
+  model?: string;
+  /** Model scale inside the scene. */
+  scale?: number;
+  /** Camera distance from the model. Increase to zoom out. */
+  cameraZ?: number;
 };
 
 /**
- * Decorative 3D Greek bust with subtle glitch + chromatic aberration aura.
+ * Decorative 3D model with subtle glitch + chromatic aberration aura.
  * Transparent canvas — blends into the page background.
  */
-export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
+export function StatueBust({
+  size = 260,
+  className = "",
+  model = DEFAULT_MODEL,
+  scale = 0.7,
+  cameraZ = 10,
+}: StatueBustProps) {
   return (
     <div
       className={className}
@@ -45,7 +57,7 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
       aria-hidden
     >
       <Canvas
-        camera={{ position: [0, 0, 10], fov: 35 }}
+        camera={{ position: [0, 0, cameraZ], fov: 35 }}
         gl={{
           alpha: true,
           antialias: true,
@@ -74,7 +86,7 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
 
         <Suspense fallback={null}>
           <Center>
-            <Bust scale={0.7} />
+            <Model url={model} scale={scale} />
           </Center>
         </Suspense>
 
@@ -99,4 +111,4 @@ export function StatueBust({ size = 260, className = "" }: StatueBustProps) {
   );
 }
 
-useGLTF.preload(MODEL_URL);
+useGLTF.preload(DEFAULT_MODEL);
