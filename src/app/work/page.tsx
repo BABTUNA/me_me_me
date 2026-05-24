@@ -63,7 +63,7 @@ export default function WorkPage() {
                     {p.status && (
                       <span className="num flex items-center gap-2">
                         <span
-                          className={`inline-block h-1.5 w-1.5 rounded-full ${
+                          className={`inline-block h-1.5 w-1.5 ${
                             p.status === "shipped"
                               ? "bg-[var(--color-accent)]"
                               : p.status === "wip"
