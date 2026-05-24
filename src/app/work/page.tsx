@@ -22,22 +22,21 @@ export default function WorkPage() {
         <BinaryBackground seed={101} />
         <div className="relative mx-auto max-w-6xl px-6 py-28 sm:py-36">
           <div className="num mb-6">/ work — index</div>
-          <div className="flex items-center gap-6 sm:gap-10">
-            <h1 className="max-w-3xl flex-1 text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
-              Things I&apos;ve built,
-              <br />
-              broken, and
-              <br />
-              <span className="text-[var(--color-accent)]">shipped</span>.
-            </h1>
-            <StatueBust
-              size={480}
-              model="/models/apollo.glb"
-              scale={2.4}
-              cameraZ={9}
-              className="hidden shrink-0 lg:block"
-            />
-          </div>
+          <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
+            Things I&apos;ve built,
+            <br />
+            broken, and
+            <br />
+            <span className="text-[var(--color-accent)]">shipped</span>.
+          </h1>
+          <StatueBust
+            width={520}
+            height={720}
+            model="/models/apollo.glb"
+            scale={2.4}
+            cameraZ={9}
+            className="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 lg:block"
+          />
           <p className="mt-6 max-w-xl text-[var(--color-fg-muted)]">
             A running list of side projects, contributions, and experiments.
             Some are live, some are in progress, some are gracefully archived.

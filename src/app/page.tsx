@@ -17,22 +17,21 @@ export default function HomePage() {
         <BinaryBackground />
         <div className="relative mx-auto max-w-6xl px-6 py-28 sm:py-36">
           <div className="num mb-6">/ 01 — index</div>
-          <div className="flex items-center gap-6 sm:gap-10">
-            <h1 className="max-w-3xl flex-1 text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
-              building small,
-              <br />
-              sharp things on
-              <br />
-              the <span className="text-[var(--color-accent)]">internet</span>.
-            </h1>
-            <StatueBust
-              size={480}
-              model="/models/rossbandiger.glb"
-              scale={2.2}
-              cameraZ={9}
-              className="hidden shrink-0 lg:block"
-            />
-          </div>
+          <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
+            building small,
+            <br />
+            sharp things on
+            <br />
+            the <span className="text-[var(--color-accent)]">internet</span>.
+          </h1>
+          <StatueBust
+            width={520}
+            height={720}
+            model="/models/rossbandiger.glb"
+            scale={0.6}
+            cameraZ={45}
+            className="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 lg:block"
+          />
           <p className="mt-8 max-w-xl text-base text-[var(--color-fg-muted)] sm:text-lg">
             I&apos;m Ben — engineer, writer, and serial side-project enjoyer.
             This is my workshop, my notebook, and my front door.

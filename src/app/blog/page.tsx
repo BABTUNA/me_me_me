@@ -28,20 +28,19 @@ export default function BlogIndexPage() {
         <BinaryBackground seed={202} />
         <div className="relative mx-auto max-w-6xl px-6 py-28 sm:py-36">
           <div className="num mb-6">/ blog — index</div>
-          <div className="flex items-center gap-6 sm:gap-10">
-            <h1 className="max-w-3xl flex-1 text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
-              Notes from the
-              <br />
-              <span className="text-[var(--color-accent)]">workshop</span>.
-            </h1>
-            <StatueBust
-              size={480}
-              model="/models/roza-loewenfeld.glb"
-              scale={2.2}
-              cameraZ={9}
-              className="hidden shrink-0 lg:block"
-            />
-          </div>
+          <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
+            Notes from the
+            <br />
+            <span className="text-[var(--color-accent)]">workshop</span>.
+          </h1>
+          <StatueBust
+            width={520}
+            height={720}
+            model="/models/roza-loewenfeld.glb"
+            scale={2.2}
+            cameraZ={9}
+            className="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 lg:block"
+          />
           <p className="mt-6 max-w-xl text-[var(--color-fg-muted)]">
             Essays, debugging stories, and short notes. Roughly in reverse
             chronological order — newest at the top.

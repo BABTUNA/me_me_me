@@ -29,7 +29,12 @@ function Model({ url, scale = 1 }: { url: string; scale?: number }) {
 }
 
 type StatueBustProps = {
+  /** Canvas square dimension (shorthand). Overridden by `width`/`height` if set. */
   size?: number;
+  /** Canvas width in px. Defaults to `size`. */
+  width?: number;
+  /** Canvas height in px. Defaults to `size`. */
+  height?: number;
   className?: string;
   /** GLB model URL. Defaults to the marble bust. */
   model?: string;
@@ -45,15 +50,19 @@ type StatueBustProps = {
  */
 export function StatueBust({
   size = 260,
+  width,
+  height,
   className = "",
   model = DEFAULT_MODEL,
   scale = 0.7,
   cameraZ = 10,
 }: StatueBustProps) {
+  const w = width ?? size;
+  const h = height ?? size;
   return (
     <div
       className={className}
-      style={{ width: size, height: size }}
+      style={{ width: w, height: h }}
       aria-hidden
     >
       <Canvas
