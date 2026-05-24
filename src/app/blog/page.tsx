@@ -5,7 +5,7 @@ import { BinaryBackground } from "@/components/binary-background";
 import { StatueBust } from "@/components/statue-bust";
 import { getAllPosts } from "@/lib/posts";
 
-preload("/models/roza-loewenfeld.glb", { as: "fetch", crossOrigin: "anonymous" });
+preload("/models/apollo.glb", { as: "fetch", crossOrigin: "anonymous" });
 
 export const metadata = {
   title: "Blog",
@@ -36,11 +36,11 @@ export default function BlogIndexPage() {
             <span className="text-[var(--color-accent)]">workshop</span>.
           </h1>
           <StatueBust
-            width={860}
-            height={1140}
-            model="/models/roza-loewenfeld.glb"
-            scale={0.1}
-            cameraZ={300}
+            width={520}
+            height={720}
+            model="/models/apollo.glb"
+            scale={2.4}
+            cameraZ={9}
             className="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 lg:block"
           />
           <p className="mt-6 max-w-xl text-[var(--color-fg-muted)]">

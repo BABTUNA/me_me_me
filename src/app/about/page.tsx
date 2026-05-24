@@ -4,7 +4,7 @@ import { Arrow } from "@/components/arrow";
 import { BinaryBackground } from "@/components/binary-background";
 import { StatueBust } from "@/components/statue-bust";
 
-preload("/models/man-in-armor.glb", { as: "fetch", crossOrigin: "anonymous" });
+preload("/models/apollo.glb", { as: "fetch", crossOrigin: "anonymous" });
 
 export const metadata = {
   title: "About",
@@ -48,11 +48,11 @@ export default function AboutPage() {
             </span>
           </h1>
           <StatueBust
-            width={420}
-            height={600}
-            model="/models/man-in-armor.glb"
-            scale={0.45}
-            cameraZ={68}
+            width={520}
+            height={720}
+            model="/models/apollo.glb"
+            scale={2.4}
+            cameraZ={9}
             className="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 lg:block"
           />
         </div>
