@@ -46,7 +46,13 @@ export default function AboutPage() {
                 I build things.
               </span>
             </h1>
-            <StatueBust size={480} className="hidden shrink-0 lg:block" />
+            <StatueBust
+              size={480}
+              model="/models/man-in-armor.glb"
+              scale={2.2}
+              cameraZ={9}
+              className="hidden shrink-0 lg:block"
+            />
           </div>
         </div>
       </section>

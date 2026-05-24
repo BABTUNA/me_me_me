@@ -34,7 +34,13 @@ export default function BlogIndexPage() {
               <br />
               <span className="text-[var(--color-accent)]">workshop</span>.
             </h1>
-            <StatueBust size={480} className="hidden shrink-0 lg:block" />
+            <StatueBust
+              size={480}
+              model="/models/roza-loewenfeld.glb"
+              scale={2.2}
+              cameraZ={9}
+              className="hidden shrink-0 lg:block"
+            />
           </div>
           <p className="mt-6 max-w-xl text-[var(--color-fg-muted)]">
             Essays, debugging stories, and short notes. Roughly in reverse
