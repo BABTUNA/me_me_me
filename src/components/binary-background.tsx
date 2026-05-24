@@ -13,7 +13,7 @@ export function BinaryBackground({
   opacity = 0.06,
   seed = 42,
 }: BinaryBackgroundProps) {
-  const rows = generateRows(80, 140, seed);
+  const rows = generateRows(80, 320, seed);
 
   return (
     <div
