@@ -66,12 +66,14 @@ export default function BlogIndexPage() {
                 <li key={post.slug}>
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="group grid grid-cols-[3rem_8rem_1fr_auto] items-baseline gap-6 px-2 py-6 transition-colors hover:bg-[var(--color-surface)]"
+                    className="group flex flex-col gap-3 px-2 py-6 transition-colors hover:bg-[var(--color-surface)] sm:grid sm:grid-cols-[3rem_8rem_1fr_auto] sm:items-baseline sm:gap-6"
                   >
-                    <span className="num">
-                      {String(posts.length - i).padStart(2, "0")}
-                    </span>
-                    <span className="num">{formatDate(post.date)}</span>
+                    <div className="flex items-center gap-3 sm:contents">
+                      <span className="num">
+                        {String(posts.length - i).padStart(2, "0")}
+                      </span>
+                      <span className="num">{formatDate(post.date)}</span>
+                    </div>
                     <div>
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <PostCategoryBadge category={post.category} />
@@ -83,7 +85,7 @@ export default function BlogIndexPage() {
                         {post.summary}
                       </div>
                     </div>
-                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className="hidden opacity-0 transition-opacity group-hover:opacity-100 sm:inline">
                       <Arrow variant="accent" />
                     </span>
                   </Link>
