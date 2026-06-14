@@ -2,7 +2,8 @@ import { preload } from "react-dom";
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
 import { BinaryBackground } from "@/components/binary-background";
-import { StatueBust } from "@/components/statue-bust";
+import { StatueBust } from "@/components/statue-bust-lazy";
+import { experience } from "@/content/experience";
 
 preload("/models/apollo.glb", { as: "fetch", crossOrigin: "anonymous" });
 
@@ -12,24 +13,39 @@ export const metadata = {
 };
 
 const facts: { label: string; value: string }[] = [
-  { label: "based", value: "somewhere on Earth" },
-  { label: "role", value: "engineer / builder" },
-  { label: "stack", value: "ts · python · go" },
-  { label: "interests", value: "tools, systems, prose" },
+  { label: "based", value: "Tampa, FL" },
+  { label: "role", value: "Software Engineer Intern @ Leidos" },
+  { label: "education", value: "USF · BS Computer Science · 3.88 GPA" },
+  { label: "graduating", value: "May 2027" },
 ];
 
 const stack: { label: string; items: string[] }[] = [
   {
-    label: "everyday",
-    items: ["TypeScript", "Python", "PostgreSQL", "Tailwind", "Next.js"],
+    label: "languages",
+    items: ["Java", "TypeScript", "Python", "C#", "C++", "SQL"],
   },
   {
-    label: "comfortable",
-    items: ["Go", "Rust", "Docker", "FastAPI", "Redis"],
+    label: "frameworks & tools",
+    items: [
+      "Spring Boot",
+      "React",
+      "Next.js",
+      "Django",
+      "Express",
+      "Docker",
+      "Kubernetes",
+    ],
   },
   {
-    label: "exploring",
-    items: ["LLM tooling", "Edge runtimes", "DSP"],
+    label: "infrastructure",
+    items: [
+      "AWS",
+      "Kafka",
+      "Apache Beam & Spark",
+      "GraphQL",
+      "DynamoDB",
+      "Azure DevOps",
+    ],
   },
 ];
 
@@ -37,24 +53,27 @@ export default function AboutPage() {
   return (
     <>
       {/* HERO */}
-      <section className="relative border-b border-[var(--color-border)]">
+      <section className="relative overflow-hidden border-b border-[var(--color-border)]">
         <BinaryBackground seed={303} />
-        <div className="relative mx-auto max-w-6xl px-6 pt-12 pb-24 sm:pt-16 sm:pb-32">
-          <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
-            Hi, I&apos;m Ben.
-            <br />
-            <span className="text-[var(--color-accent)]">
-              I build things.
-            </span>
-          </h1>
+        <div className="relative z-10 mx-auto flex min-h-[20rem] max-w-6xl flex-col justify-center px-6 py-14 sm:min-h-[24rem]">
           <StatueBust
-            width={520}
-            height={720}
+            priority
+            width="clamp(280px, 48vw, 600px)"
+            height="100%"
             model="/models/apollo.glb"
-            scale={2.4}
+            scale={3.2}
             cameraZ={9}
-            className="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 lg:block"
+            className="pointer-events-none absolute inset-y-0 right-0 z-0 opacity-20 sm:opacity-40 lg:opacity-100"
           />
+          <div className="relative z-10">
+            <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
+              Hi, I&apos;m Ben.
+              <br />
+              <span className="text-[var(--color-accent)]">
+                I build things.
+              </span>
+            </h1>
+          </div>
         </div>
       </section>
 
@@ -62,32 +81,31 @@ export default function AboutPage() {
       <section className="border-b border-[var(--color-border)]">
         <div className="mx-auto grid max-w-6xl gap-px bg-[var(--color-border)] px-0 sm:grid-cols-3">
           <div className="bg-[var(--color-bg)] p-8 sm:col-span-2">
-            <div className="num mb-6">/ 01 — bio</div>
+            <div className="num mb-6">/ 01 bio</div>
             <div className="space-y-5 text-[var(--color-fg)] leading-relaxed">
               <p>
-                I&apos;m an engineer who likes building small, sharp tools and
-                writing about how they work. Most of my time goes into product
-                engineering — backend systems, web apps, and the occasional
-                weird side project.
+                I&apos;m a Computer Science student at the University of South
+                Florida (GPA 3.88, expected graduation May 2027) and a Software
+                Engineer Intern (Co-op) at Leidos in St. Petersburg, FL.
               </p>
               <p>
-                I care about{" "}
-                <span className="text-[var(--color-accent)]">
-                  craft, clarity, and shipping
-                </span>
-                . I&apos;d rather build one thing that works than five things
-                that almost do. I think tools should feel obvious, and I think
-                obvious is hard.
+                I contribute to Java based backend services for an operational
+                readiness platform monitoring military equipment health and fault
+                status. I&apos;ve also interned at Gradual, Bill, and Bentley
+                Systems, working on backend APIs, event pipelines, AI agents, and
+                cloud infrastructure.
               </p>
               <p>
-                Outside of work I&apos;m usually reading, lifting, listening
-                to music too loud, or arguing with a terminal.
+                As Technology Lead for the USF ColorStack Chapter, I coordinated
+                tech curriculum and presented 4 workshops to over 150 students
+                teaching data structures and algorithms, backend (Django),
+                frontend (React), and cloud deployment (AWS).
               </p>
             </div>
           </div>
 
           <aside className="bg-[var(--color-bg)] p-8">
-            <div className="num mb-6">/ 02 — facts</div>
+            <div className="num mb-6">/ 02 facts</div>
             <dl className="space-y-4">
               {facts.map((f) => (
                 <div key={f.label}>
@@ -102,10 +120,45 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* EXPERIENCE */}
+      <section className="border-b border-[var(--color-border)]">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="num mb-8">/ 03 experience</div>
+          <ul className="mx-auto max-w-2xl divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+            {experience.map((job) => (
+              <li key={job.company} className="py-8">
+                <div className="flex flex-col gap-1">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <h2 className="text-lg font-medium">{job.role}</h2>
+                    <span className="font-mono text-xs text-[var(--color-fg-dim)]">
+                      {job.period}
+                    </span>
+                  </div>
+                  <p className="text-sm text-[var(--color-fg-muted)]">
+                    {job.company} · {job.location}
+                  </p>
+                </div>
+                <ul className="mt-4 space-y-3">
+                  {job.highlights.map((h) => (
+                    <li
+                      key={h}
+                      className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--color-fg-muted)]"
+                    >
+                      <span className="mt-2 inline-block h-1 w-1 shrink-0 bg-[var(--color-accent)]" />
+                      {h}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       {/* STACK */}
       <section className="border-b border-[var(--color-border)]">
         <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="num mb-8">/ 03 — stack</div>
+          <div className="num mb-8">/ 04 stack</div>
           <div className="grid gap-8 sm:grid-cols-3">
             {stack.map((s) => (
               <div key={s.label}>
@@ -132,7 +185,7 @@ export default function AboutPage() {
       {/* CONTACT CTA */}
       <section>
         <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="num mb-6">/ 04 — say hi</div>
+          <div className="num mb-6">/ 05 say hi</div>
           <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">
             Want to talk?
           </h2>
@@ -153,6 +206,12 @@ export default function AboutPage() {
               className="arrow-link text-sm text-[var(--color-fg-muted)]"
             >
               github <Arrow />
+            </Link>
+            <Link
+              href="https://www.linkedin.com/in/benbarreraA/"
+              className="arrow-link text-sm text-[var(--color-fg-muted)]"
+            >
+              linkedin <Arrow />
             </Link>
           </div>
         </div>

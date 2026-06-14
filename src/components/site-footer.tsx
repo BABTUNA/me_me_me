@@ -3,8 +3,7 @@ import { Arrow } from "./arrow";
 
 const socials = [
   { href: "https://github.com/BABTUNA", label: "GitHub" },
-  { href: "https://x.com/", label: "X" },
-  { href: "https://www.linkedin.com/", label: "LinkedIn" },
+  { href: "https://www.linkedin.com/in/benbarreraA/", label: "LinkedIn" },
   { href: "mailto:benbarrera13@gmail.com", label: "Email" },
 ];
 

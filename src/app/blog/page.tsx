@@ -2,7 +2,8 @@ import { preload } from "react-dom";
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
 import { BinaryBackground } from "@/components/binary-background";
-import { StatueBust } from "@/components/statue-bust";
+import { StatueBust } from "@/components/statue-bust-lazy";
+import { PostCategoryBadge } from "@/components/post-category-badge";
 import { getAllPosts } from "@/lib/posts";
 
 preload("/models/apollo.glb", { as: "fetch", crossOrigin: "anonymous" });
@@ -27,26 +28,29 @@ export default function BlogIndexPage() {
 
   return (
     <>
-      <section className="relative border-b border-[var(--color-border)]">
+      <section className="relative overflow-hidden border-b border-[var(--color-border)]">
         <BinaryBackground seed={202} />
-        <div className="relative mx-auto max-w-6xl px-6 pt-12 pb-24 sm:pt-16 sm:pb-32">
-          <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
-            Notes from the
-            <br />
-            <span className="text-[var(--color-accent)]">workshop</span>.
-          </h1>
+        <div className="relative z-10 mx-auto flex min-h-[20rem] max-w-6xl flex-col justify-center px-6 py-14 sm:min-h-[24rem]">
           <StatueBust
-            width={520}
-            height={720}
+            priority
+            width="clamp(280px, 48vw, 600px)"
+            height="100%"
             model="/models/apollo.glb"
-            scale={2.4}
+            scale={3.2}
             cameraZ={9}
-            className="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 lg:block"
+            className="pointer-events-none absolute inset-y-0 right-0 z-0 opacity-20 sm:opacity-40 lg:opacity-100"
           />
-          <p className="mt-6 max-w-xl text-[var(--color-fg-muted)]">
-            Essays, debugging stories, and short notes. Roughly in reverse
-            chronological order — newest at the top.
-          </p>
+          <div className="relative z-10">
+            <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
+              Notes from the
+              <br />
+              <span className="text-[var(--color-accent)]">workshop</span>.
+            </h1>
+            <p className="mt-6 max-w-xl text-[var(--color-fg)]">
+              Essays, debugging stories, and short notes. Roughly in reverse
+              chronological order, newest at the top.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -69,6 +73,9 @@ export default function BlogIndexPage() {
                     </span>
                     <span className="num">{formatDate(post.date)}</span>
                     <div>
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <PostCategoryBadge category={post.category} />
+                      </div>
                       <div className="text-lg font-medium leading-snug">
                         {post.title}
                       </div>

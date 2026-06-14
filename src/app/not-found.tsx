@@ -4,7 +4,7 @@ import { Arrow } from "@/components/arrow";
 export default function NotFound() {
   return (
     <section className="mx-auto flex min-h-[60vh] max-w-6xl flex-col justify-center px-6 py-20">
-      <div className="num mb-6">/ 404 — not found</div>
+      <div className="num mb-6">/ 404 not found</div>
       <h1 className="text-5xl font-medium tracking-tight sm:text-7xl">
         Nothing here.
       </h1>
