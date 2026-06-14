@@ -1,6 +1,4 @@
 type BinaryBackgroundProps = {
-  /** 0–1 opacity of the binary text. */
-  opacity?: number;
   /** PRNG seed — change to get a different stable pattern. */
   seed?: number;
 };
@@ -8,22 +6,19 @@ type BinaryBackgroundProps = {
 /**
  * Decorative binary (0/1) background. SSR-safe (deterministic from seed).
  * Position the parent `relative`; this fills it absolutely.
+ * Color comes from --color-binary so it stays visible in light and dark themes.
  */
-export function BinaryBackground({
-  opacity = 0.06,
-  seed = 42,
-}: BinaryBackgroundProps) {
+export function BinaryBackground({ seed = 42 }: BinaryBackgroundProps) {
   const rows = generateRows(80, 320, seed);
 
   return (
     <div
-      className="pointer-events-none absolute inset-0 overflow-hidden select-none"
+      className="binary-bg pointer-events-none absolute inset-0 overflow-hidden select-none"
       aria-hidden
     >
       <pre
-        className="m-0 p-0 font-mono whitespace-pre text-[var(--color-fg)]"
+        className="binary-bg m-0 p-0 font-mono whitespace-pre"
         style={{
-          opacity,
           fontSize: 11,
           lineHeight: "16px",
         }}

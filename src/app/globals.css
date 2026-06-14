@@ -20,6 +20,7 @@
   --color-accent: #ff10f0;
   --color-accent-soft: #ff10f033;
   --color-grid-line: rgba(0, 0, 0, 0.045);
+  --color-binary: rgba(10, 10, 10, 0.065);
   /* The globe section card — light bg required for mix-blend-mode: multiply */
   --globe-card-bg: #ffffff;
   --globe-card-fg: #0a0a0a;
@@ -43,6 +44,7 @@
   --color-accent: #ff10f0;
   --color-accent-soft: #ff10f033;
   --color-grid-line: rgba(255, 255, 255, 0.025);
+  --color-binary: rgba(163, 163, 163, 0.11);
   /* In dark mode the globe card stays cream — intentional artifact */
   --globe-card-bg: #f4eee4;
   --globe-card-fg: #1a1a1a;
@@ -98,9 +100,98 @@ a {
   color: var(--color-accent);
 }
 
+/* In-article / prose links (blog MDX, etc.) */
+.content-link {
+  font-weight: 500;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  background: var(--color-accent-soft);
+  padding: 0.1em 0.35em;
+  border-radius: 2px;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+.content-link:hover {
+  color: var(--color-bg);
+  background: var(--color-accent);
+  text-decoration-color: transparent;
+}
+.content-link-external {
+  margin-left: 0.2em;
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
 .grid-bg {
   background-image:
     linear-gradient(to right, var(--color-grid-line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--color-grid-line) 1px, transparent 1px);
   background-size: 56px 56px;
+}
+
+.binary-bg {
+  z-index: 0;
+  color: var(--color-binary);
+}
+
+/* Statue bust loading placeholder */
+.statue-loader-frame {
+  backdrop-filter: blur(0);
+}
+
+.statue-loader-scan {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--color-accent-soft) 48%,
+    transparent 100%
+  );
+  background-size: 100% 220%;
+  animation: statue-scan 2.4s ease-in-out infinite;
+  opacity: 0.35;
+}
+
+.statue-loader-pulse {
+  animation: statue-pulse 1.4s ease-in-out infinite;
+}
+
+.statue-loader-bit {
+  animation: statue-bit 1.8s ease-in-out infinite;
+}
+
+@keyframes statue-scan {
+  0% {
+    background-position: 0% -120%;
+  }
+  100% {
+    background-position: 0% 120%;
+  }
+}
+
+@keyframes statue-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes statue-bit {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
+    color: var(--color-accent);
+  }
 }

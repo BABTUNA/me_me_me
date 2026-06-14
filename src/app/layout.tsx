@@ -19,9 +19,10 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: {
     default: "Ben Barrera",
-    template: "%s — Ben Barrera",
+    template: "%s | Ben Barrera",
   },
-  description: "Personal site, projects, and writing.",
+  description:
+    "Ben Barrera, CS student at USF and software engineer co-op at Leidos. Projects, writing, and contact.",
   metadataBase: new URL("https://example.com"),
 };
 
@@ -30,10 +31,10 @@ const themeInitScript = `
 (function () {
   try {
     var stored = localStorage.getItem('theme');
-    var theme = stored === 'dark' ? 'dark' : 'light';
+    var theme = stored === 'light' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', theme);
   } catch (e) {
-    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.setAttribute('data-theme', 'dark');
   }
 })();
 `;
@@ -46,7 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="light"
+      data-theme="dark"
       className={`${inter.variable} ${mono.variable}`}
       suppressHydrationWarning
     >
