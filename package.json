@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "optimize-models": "gltf-transform optimize public/models/rossbandiger.original.glb public/models/rossbandiger.glb --compress draco --texture-compress webp && gltf-transform optimize public/models/apollo.original.glb public/models/apollo.glb --compress draco --texture-compress webp"
   },
   "dependencies": {
     "@mdx-js/loader": "3.1.0",
@@ -23,6 +24,7 @@
     "postprocessing": "^6.39.1",
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "remark-gfm": "^4.0.1",
     "three": "^0.184.0"
   },
   "devDependencies": {

@@ -39,7 +39,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# editor
+# uncompressed model backups (keep locally, do not deploy)
+public/models/*.original.glb
+
 .idea
 .vscode
 *.swp
