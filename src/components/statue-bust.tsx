@@ -10,11 +10,13 @@ import {
 } from "@react-three/postprocessing";
 import { BlendFunction, GlitchMode } from "postprocessing";
 import { Vector2, type Group } from "three";
+import { StatueBustLoader } from "./statue-bust-loader";
 
-const DEFAULT_MODEL = "/models/bust-hi.glb";
+const DEFAULT_MODEL = "/models/apollo.glb";
+const DRACO_DECODER = "https://www.gstatic.com/draco/versioned/decoders/1.5.7/";
 
 function Model({ url, scale = 1 }: { url: string; scale?: number }) {
-  const { scene } = useGLTF(url);
+  const { scene } = useGLTF(url, DRACO_DECODER, false);
   const ref = useRef<Group>(null);
 
   useFrame((_, dt) => {
@@ -29,31 +31,19 @@ function Model({ url, scale = 1 }: { url: string; scale?: number }) {
 }
 
 type StatueBustProps = {
-  /** Canvas square dimension (shorthand). Overridden by `width`/`height` if set. */
   size?: number;
-  /** Canvas width in px. Defaults to `size`. */
-  width?: number;
-  /** Canvas height in px. Defaults to `size`. */
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   className?: string;
-  /** GLB model URL. Defaults to the marble bust. */
   model?: string;
-  /** Model scale inside the scene. */
   scale?: number;
-  /** Camera distance from the model. Increase to zoom out. */
   cameraZ?: number;
+  /** Hero busts: fetch + mount immediately instead of waiting for intersection. */
+  priority?: boolean;
+  /** Post FX are pretty but cost GPU time; off by default on coarse pointers. */
+  effects?: boolean;
 };
 
-/**
- * Decorative 3D model with subtle glitch + chromatic aberration aura.
- * Transparent canvas — blends into the page background.
- *
- * Perf notes:
- * - Renders only when in viewport (IntersectionObserver) to free GPU/CPU when scrolled away.
- * - Calls useGLTF.preload for the active model so navigation between pages stays warm.
- * - Uses drei <Preload all /> so once the GLB downloads, textures upload to GPU before render.
- * - Use ReactDOM.preload(...) in the page that hosts this for HTML-time fetch start.
- */
 export function StatueBust({
   size = 260,
   width,
@@ -62,22 +52,39 @@ export function StatueBust({
   model = DEFAULT_MODEL,
   scale = 0.7,
   cameraZ = 10,
+  priority = false,
+  effects,
 }: StatueBustProps) {
   const w = width ?? size;
   const h = height ?? size;
   const containerRef = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
+  const [inView, setInView] = useState(priority);
   const [loaded, setLoaded] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
+  const [enableEffects, setEnableEffects] = useState(false);
 
-  // Prime the GLTF cache for the active model as soon as the component mounts.
-  // Safe to call repeatedly — it's idempotent.
+  const useEffects =
+    effects ??
+    (typeof window !== "undefined" &&
+      window.matchMedia("(pointer: fine)").matches);
+
   useEffect(() => {
-    useGLTF.preload(model);
+    setLoaded(false);
+    setShowLoader(false);
+    useGLTF.preload(model, DRACO_DECODER, false);
   }, [model]);
 
-  // Only mount the Canvas when scrolled into view — saves first-paint cost
-  // and avoids GPU work for off-screen busts.
   useEffect(() => {
+    if (!inView || loaded) {
+      setShowLoader(false);
+      return;
+    }
+    const delay = window.setTimeout(() => setShowLoader(true), 350);
+    return () => window.clearTimeout(delay);
+  }, [inView, loaded]);
+
+  useEffect(() => {
+    if (priority) return;
     const node = containerRef.current;
     if (!node) return;
     const io = new IntersectionObserver(
@@ -87,11 +94,19 @@ export function StatueBust({
           io.disconnect();
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: "400px" },
     );
     io.observe(node);
     return () => io.disconnect();
-  }, []);
+  }, [priority]);
+
+  useEffect(() => {
+    if (loaded && useEffects) {
+      const id = requestAnimationFrame(() => setEnableEffects(true));
+      return () => cancelAnimationFrame(id);
+    }
+    setEnableEffects(false);
+  }, [loaded, useEffects]);
 
   return (
     <div
@@ -100,16 +115,20 @@ export function StatueBust({
       style={{ width: w, height: h }}
       aria-hidden
     >
+      {inView && showLoader && !loaded && (
+        <StatueBustLoader className="pointer-events-none absolute inset-0 h-full w-full" />
+      )}
+
       {inView && (
         <Canvas
           camera={{ position: [0, 0, cameraZ], fov: 35 }}
           gl={{
             alpha: true,
-            antialias: true,
+            antialias: false,
             premultipliedAlpha: false,
             powerPreference: "high-performance",
           }}
-          dpr={[1, 2]}
+          dpr={[1, 1.25]}
           onCreated={({ gl, scene }) => {
             gl.setClearColor(0x000000, 0);
             gl.setClearAlpha(0);
@@ -118,7 +137,7 @@ export function StatueBust({
           style={{
             background: "transparent",
             opacity: loaded ? 1 : 0,
-            transition: "opacity 0.4s ease",
+            transition: "opacity 0.35s ease",
           }}
         >
           <ambientLight intensity={0.18} />
@@ -138,7 +157,11 @@ export function StatueBust({
             color="#5a6a8a"
           />
 
-          <Suspense fallback={null}>
+          <Suspense
+            fallback={
+              <LoaderBridge onShow={() => setShowLoader(true)} />
+            }
+          >
             <Center>
               <Model url={model} scale={scale} />
             </Center>
@@ -146,39 +169,43 @@ export function StatueBust({
             <FadeInOnReady onReady={() => setLoaded(true)} />
           </Suspense>
 
-          <EffectComposer multisampling={0} enableNormalPass={false}>
-            <ChromaticAberration
-              offset={new Vector2(0.0025, 0.0018)}
-              radialModulation={false}
-              modulationOffset={0}
-              blendFunction={BlendFunction.NORMAL}
-            />
-            <Glitch
-              delay={new Vector2(2.5, 6)}
-              duration={new Vector2(0.1, 0.3)}
-              strength={new Vector2(0.15, 0.45)}
-              mode={GlitchMode.SPORADIC}
-              active
-              ratio={0.6}
-            />
-          </EffectComposer>
+          {enableEffects && (
+            <EffectComposer multisampling={0} enableNormalPass={false}>
+              <ChromaticAberration
+                offset={new Vector2(0.0025, 0.0018)}
+                radialModulation={false}
+                modulationOffset={0}
+                blendFunction={BlendFunction.NORMAL}
+              />
+              <Glitch
+                delay={new Vector2(2.5, 6)}
+                duration={new Vector2(0.1, 0.3)}
+                strength={new Vector2(0.15, 0.45)}
+                mode={GlitchMode.SPORADIC}
+                active
+                ratio={0.6}
+              />
+            </EffectComposer>
+          )}
         </Canvas>
       )}
     </div>
   );
 }
 
-/**
- * Tiny helper that runs once after the parent Suspense resolves — fades the
- * canvas in so users don't see a hard pop when the model snaps into place.
- */
+function LoaderBridge({ onShow }: { onShow: () => void }) {
+  useEffect(() => {
+    onShow();
+  }, [onShow]);
+  return null;
+}
+
 function FadeInOnReady({ onReady }: { onReady: () => void }) {
   useEffect(() => {
-    // Defer one frame so first render of the model lands before opacity flips
     const id = requestAnimationFrame(onReady);
     return () => cancelAnimationFrame(id);
   }, [onReady]);
   return null;
 }
 
-useGLTF.preload(DEFAULT_MODEL);
+useGLTF.preload(DEFAULT_MODEL, DRACO_DECODER, false);
