@@ -1,0 +1,76 @@
+---
+title: "Why I built Lattis"
+date: "2026-05-24"
+summary: "I kept getting cooked on system design at Oracle, Bloomberg, and Palantir. So I built a 3D walkthrough that shows why architectures evolve as systems scale."
+category: technical
+tags: ["system design", "lattis", "interviews", "learning"]
+---
+
+I fumbled the bag at places like **Oracle**, **Bloomberg**, and **Palantir Technologies** because I got cooked on **system design**.
+
+And the reality is, learning system design is not even that hard once you grasp the basics. The problem is that most learning materials out there suck at showing the **logical progression** of why certain architectures get introduced as systems scale with more users.
+
+Reading through dozens of disconnected articles to piece that story together was not fun, to say the least.
+
+So I built **[Lattis](https://www.lattissystems.design/)**: a way to visualize how architecture decisions are made, step by step, as load grows.
+
+**[Try Lattis →](https://www.lattissystems.design/)**
+
+## The gap I kept hitting
+
+System design interviews are not really asking you to draw boxes. They are asking whether you understand **why** each box appears in a specific order:
+
+- When do you add a cache, and what breaks if you add it too early?
+- Why does fan-out show up before you ever talk about sharding?
+- What changes when one celebrity user dwarfs everyone else on the timeline?
+
+Most prep content gives you a finished diagram and a wall of text. You memorize the picture, but the **sequence of decisions** does not stick. That is exactly where I kept losing rounds.
+
+## What Lattis does
+
+[Lattis](https://www.lattissystems.design/) is an interactive system design curriculum with **3D walkthroughs** that build as you read. Click a step, watch the cache appear, see traffic move across the system.
+
+The idea is simple:
+
+1. **One small idea per step.** Twelve to fourteen steps per lesson. Each step adds one decision, not a lecture before anything renders.
+2. **A scene that moves with the words.** No static boxes-and-arrows screenshots. The diagram updates when the concept shows up in the narrative.
+3. **Tradeoffs next to the move.** Reasons stay attached to the decision that triggered them, so the ordering of choices stays intact.
+
+You leave with a way of thinking, not a slide to memorize.
+
+## What is on the syllabus
+
+Ten lessons, roughly thirty minutes each:
+
+| Lesson | Topic | Highlights |
+| --- | --- | --- |
+| Overview | System design fundamentals | 6-step process, core components, tradeoffs |
+| 01 | URL Shortener | Sharding, caching, async analytics |
+| 02 | Twitter (X) | Fan-out, timeline cache, the celebrity problem |
+| 03 | WhatsApp | WebSockets, offline delivery, group chat |
+| 04 | Netflix | CDN, adaptive bitrate, recommendations |
+| 05 | Uber | Geospatial indexing, matching, state machines |
+| 06 | Rate Limiter | Token bucket, Redis, circuit breakers |
+| 07 | TicketMaster | Seat locking, virtual queues, flash sales |
+| 08 | Dropbox | Chunking, dedup, conflict resolution |
+| 09 | Yelp | Geo-text search, CDC, async fanout |
+
+**[Browse lessons →](https://www.lattissystems.design/dashboard)**
+
+## Who it is for
+
+Interview prep, day job, plain curiosity. Same deal. If big distributed systems still feel like a black box, walking through real architectures in order (with a scene that matches the story) tends to click faster than grinding random blog posts.
+
+## Early demo, want feedback
+
+This is still an **early demo**. Core lessons are live and the walkthroughs work, but I am actively improving pacing, visuals, and depth.
+
+If you try it and something feels confusing, too fast, or missing a tradeoff you wish was spelled out, **[DM me on LinkedIn](https://www.linkedin.com/in/benbarreraA/)** or email [benbarrera13@gmail.com](mailto:benbarrera13@gmail.com). Honest feedback is how this gets good.
+
+## Why I am sharing this
+
+I built Lattis because I needed it. I am posting about it because I think a lot of people are in the same spot I was: technically strong, but losing offers on design rounds for a fixable reason.
+
+If that sounds like you, give the [URL Shortener lesson](https://www.lattissystems.design/lessons/url-shortener) a run and see if the step-by-step build clicks better than another PDF of diagrams.
+
+**[Open Lattis →](https://www.lattissystems.design/)**

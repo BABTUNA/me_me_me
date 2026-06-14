@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
 import { Arrow } from "@/components/arrow";
+import { PostCategoryBadge } from "@/components/post-category-badge";
 import { getAllPosts, getPost } from "@/lib/posts";
+import { BlogImage, DriveEmbed, YouTube } from "@/components/mdx-media";
 import { useMDXComponents } from "../../../../mdx-components";
 
 export function generateStaticParams() {
@@ -42,7 +45,11 @@ export default async function PostPage({
   const post = getPost(slug);
   if (!post) notFound();
 
-  const components = useMDXComponents({});
+  const components = useMDXComponents({
+    BlogImage,
+    YouTube,
+    DriveEmbed,
+  });
 
   return (
     <article className="mx-auto max-w-2xl px-6 py-20">
@@ -54,7 +61,10 @@ export default async function PostPage({
       </Link>
 
       <header className="mt-10 border-b border-[var(--color-border)] pb-10">
-        <div className="num mb-4">{formatDate(post.meta.date)}</div>
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <PostCategoryBadge category={post.meta.category} />
+          <span className="num">{formatDate(post.meta.date)}</span>
+        </div>
         <h1 className="text-4xl font-medium leading-tight tracking-tight sm:text-5xl">
           {post.meta.title}
         </h1>
@@ -66,7 +76,15 @@ export default async function PostPage({
       </header>
 
       <div className="mt-2">
-        <MDXRemote source={post.content} components={components} />
+        <MDXRemote
+          source={post.content}
+          components={components}
+          options={{
+            mdxOptions: {
+              remarkPlugins: [remarkGfm],
+            },
+          }}
+        />
       </div>
 
       <footer className="mt-20 border-t border-[var(--color-border)] pt-8">

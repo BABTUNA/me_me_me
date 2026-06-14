@@ -1,4 +1,34 @@
+import type { ReactNode } from "react";
 import type { MDXComponents } from "mdx/types";
+
+function MdxLink({
+  href,
+  children,
+}: {
+  href?: string;
+  children?: ReactNode;
+}) {
+  const external =
+    typeof href === "string" &&
+    (href.startsWith("http://") || href.startsWith("https://"));
+
+  return (
+    <a
+      href={href}
+      className="content-link"
+      {...(external
+        ? { target: "_blank", rel: "noopener noreferrer" }
+        : {})}
+    >
+      {children}
+      {external ? (
+        <span className="content-link-external" aria-hidden>
+          ↗
+        </span>
+      ) : null}
+    </a>
+  );
+}
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -26,14 +56,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         {children}
       </ol>
     ),
-    a: ({ href, children }) => (
-      <a
-        href={href}
-        className="text-[var(--color-accent)] underline decoration-[var(--color-accent-soft)] underline-offset-4 transition-colors hover:decoration-[var(--color-accent)]"
-      >
-        {children}
-      </a>
-    ),
+    a: MdxLink,
     code: ({ children }) => (
       <code className="rounded-sm bg-[var(--color-surface)] px-1.5 py-0.5 font-mono text-[0.9em] text-[var(--color-fg)]">
         {children}
@@ -50,6 +73,30 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </blockquote>
     ),
     hr: () => <hr className="my-10 border-[var(--color-border)]" />,
+    table: ({ children }) => (
+      <div className="mt-6 overflow-x-auto rounded-sm border border-[var(--color-border)]">
+        <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
+          {children}
+        </table>
+      </div>
+    ),
+    thead: ({ children }) => (
+      <thead className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+        {children}
+      </thead>
+    ),
+    tbody: ({ children }) => (
+      <tbody className="divide-y divide-[var(--color-border)]">{children}</tbody>
+    ),
+    tr: ({ children }) => <tr>{children}</tr>,
+    th: ({ children }) => (
+      <th className="px-4 py-3 font-mono text-[10px] font-normal uppercase tracking-wider text-[var(--color-fg-dim)]">
+        {children}
+      </th>
+    ),
+    td: ({ children }) => (
+      <td className="px-4 py-3 align-top text-[var(--color-fg)]">{children}</td>
+    ),
     ...components,
   };
 }

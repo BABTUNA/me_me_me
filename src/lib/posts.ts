@@ -7,6 +7,7 @@ export type PostMeta = {
   title: string;
   date: string;
   summary: string;
+  category?: string;
   tags?: string[];
 };
 
@@ -26,6 +27,7 @@ export function getAllPosts(): PostMeta[] {
       title: data.title ?? slug,
       date: data.date ?? "1970-01-01",
       summary: data.summary ?? "",
+      category: data.category ?? undefined,
       tags: data.tags ?? [],
     } satisfies PostMeta;
   });
@@ -44,6 +46,7 @@ export function getPost(slug: string) {
       title: data.title ?? slug,
       date: data.date ?? "1970-01-01",
       summary: data.summary ?? "",
+      category: data.category ?? undefined,
       tags: data.tags ?? [],
     } satisfies PostMeta,
     content,

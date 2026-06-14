@@ -1,0 +1,167 @@
+---
+title: "Speeding up grouped aggregation in Daft"
+date: "2026-05-24"
+summary: "Contributing to Daft's inline grouped aggregation roadmap: min/max accumulators, string fast paths, symbolization, and more on the way to 1.2x–6.2x speedups."
+category: technical
+tags: ["daft", "rust", "open-source", "performance", "databases"]
+---
+
+Over the past few months I have been contributing to [Daft](https://github.com/Eventual-Inc/Daft), an open-source distributed dataframe engine built in Rust. My main focus has been a performance roadmap for **grouped aggregation**: the `GROUP BY` + `SUM` / `COUNT` / `MIN` / `MAX` path that shows up constantly in analytics workloads.
+
+This post walks through what that work is about, what landed, and what is still in flight.
+
+**[Tracking issue: grouped aggregation optimization roadmap →](https://github.com/Eventual-Inc/Daft/issues/6585)**
+
+## How I got involved
+
+[PR #6345](https://github.com/Eventual-Inc/Daft/pull/6345) introduced a two-phase **inline grouped aggregation** path in Daft. Instead of building per-group index lists (`Vec<Vec<u64>>`) and evaluating aggregations row by row through a generic path, it:
+
+1. **Probes** keys into a hash table and builds dense `group_ids: Vec<u32>` plus `group_sizes`.
+2. **Accumulates** in tight per-accumulator loops over those dense IDs.
+
+That design is cache-friendly and showed **1.2x–4.3x** speedups depending on cardinality. Maintainer [@desmondcheongzx](https://github.com/desmondcheongzx) opened [#6585](https://github.com/Eventual-Inc/Daft/issues/6585) to track follow-up optimizations and asked if I wanted to help. I said yes, and we agreed to land each item as its own PR.
+
+## The baseline idea
+
+The old fallback path roughly does:
+
+```
+make_groups → build index lists per group → eval_agg_expression per accumulator
+```
+
+The inline path separates **grouping** from **reducing**:
+
+```
+hash probe → dense group_ids → scatter updates into per-group accumulator state
+```
+
+For a single `Int64` group key, Daft already had a specialized FNV hash map fast path. Everything else fell through to a slower generic path: `hash_rows()`, `IndexHash`, and row-comparator closures. Most of my work has been extending the fast paths and accumulators so more real queries stay on the inline route.
+
+## What shipped
+
+### 1. Min and Max accumulators ([#6604](https://github.com/Eventual-Inc/Daft/pull/6604), merged)
+
+Roadmap item 1. Count and Sum were already inline-capable; Min and Max were the natural next step.
+
+Min/Max are trickier than Sum because they cannot widen small integers into `Int64` the way Sum does. Each numeric dtype needs its own accumulator variant (20 new variants total). Float comparisons use `PartialOrd` so NaN propagation matches the fallback path.
+
+Every new test compares inline output against the fallback path exactly, including string keys, int fast path, nullable keys, and `Float64` with NaNs.
+
+### 2. Macro-generated dispatch ([#6642](https://github.com/Eventual-Inc/Daft/pull/6642), merged)
+
+After Min/Max, the `match` arms in `init_groups` / `update_batch` / `finalize` were getting unwieldy. Desmond suggested macros before adding even more accumulator types.
+
+This PR collapses **75 hand-written match arms** into a single `define_agg_accumulator_enum!` macro plus a `dispatch_typed_accum!` helper for Min/Max factory dispatch. Adding a new accumulator type is now roughly a one-line change per variant instead of four edit sites.
+
+### 3. Single-column Utf8 / Binary fast path ([#6656](https://github.com/Eventual-Inc/Daft/pull/6656), merged)
+
+Roadmap item 2. Integer keys already had `agg_single_col_int`. String and binary keys still went through the generic multi-column hash machinery even when there was only one key column.
+
+I added `agg_single_col_bytes`, generic over `K: Hash + Eq`, which monomorphizes to `str` (Utf8) and `[u8]` (Binary). Keys are borrowed slices into the Arrow buffer: no allocation, no comparator closure. Same `FnvHashMap` pattern as integers, including separate branches for `null_count == 0` vs nullable keys.
+
+Dispatch order in `agg_groupby_inline` is now: integer fast path → byte-key fast path → generic fallback.
+
+### 4. More accumulator types (in review)
+
+Roadmap item 7. With the macro infrastructure in place, extending reducers is mostly mechanical:
+
+| PR | What it adds | Status |
+|----|----------------|--------|
+| [#6975](https://github.com/Eventual-Inc/Daft/pull/6975) | `Product` (same widening rules as Sum, reduce with `*`) | Open |
+| [#6984](https://github.com/Eventual-Inc/Daft/pull/6984) | `BoolAnd` / `BoolOr` over Boolean columns | Open |
+
+`BoolAnd` / `BoolOr` need a slightly different hot-loop access pattern because Arrow stores booleans bit-packed, so there is no `&[bool]` slice to zip over. The tests still assert bit-for-bit parity with fallback.
+
+## What is in flight (the interesting part)
+
+### Multi-column string symbolization ([#6748](https://github.com/Eventual-Inc/Daft/pull/6748))
+
+Roadmap item 3. Multi-column groupbys with fat string keys are expensive: every probe hashes and compares variable-width bytes.
+
+The idea is **batch-local symbolization**:
+
+1. Map each distinct Utf8/Binary value in a batch to a dense `u32` symbol ID.
+2. Feed those fixed-width IDs into the existing hash/probe logic.
+3. Keep it aggregation-specific, not a global dictionary layer.
+
+**Heuristic gate:** symbolization only runs when average string bytes per row is at least **16**. For very short keys (TPC-H Q1's `CHAR(1)` `l_returnflag` / `l_linestatus`), the setup cost outweighs the savings, so those shapes skip symbolization and use the existing generic path unchanged.
+
+```
+Original columns:          After symbolization:
+name    | region           name_sym | region
+--------|--------          ---------|--------
+"alice" | 1                0        | 1
+"bob"   | 2                1        | 2
+"alice" | 1                0        | 1
+```
+
+### Packed u64 keys for two string columns ([#6924](https://github.com/Eventual-Inc/Daft/pull/6924))
+
+This builds on #6748. After symbolization, each row has two `u32` IDs instead of two raw strings. #6924 packs them into one `u64`:
+
+```
+packed = (sym0 << 32) | sym1
+```
+
+Then grouping uses a typed `FnvHashMap<u64, u32>` in a tight integer loop: no per-row comparator closure, no `IndexHash`, no dynamic `Series` equality dispatch.
+
+Null semantics are preserved: `symbolize_column` reserves symbol `0` for null and starts non-null IDs at `1`, so both-null rows get a unique packed key.
+
+I split this from #6748 on purpose. #6748 is the general symbolization path; #6924 is a specialized fast path on top. Short-string shapes still fall through unchanged.
+
+**Benchmark vs #6748 alone (long-string two-column shapes):** about **1.06x–1.19x** additional speedup. Short keys are unchanged.
+
+### What the numbers look like
+
+From Rust-level benchmarks on the inline path vs fallback (Linux, `--release`, warmup=3, iters=10):
+
+**Single `Int64` key, 5M rows:**
+
+| Groups | Speedup range |
+|--------|----------------|
+| 10 | 1.45x–2.61x |
+| 1K | 1.57x–4.32x |
+| 100K | 3.90x–6.22x |
+| 5M | 1.84x–2.07x |
+
+The sweet spot is mid cardinality (around 100K groups), where the dense `group_ids` design really pays off.
+
+**Q1-like shape (two short string keys, sum + count):**
+
+| Rows | Speedup |
+|------|---------|
+| 1.2M | 1.39x |
+| 5M | 1.43x |
+
+That shape hits the symbolization skip gate, so the win comes from the broader inline framework, not from symbolization itself.
+
+## What is still on the roadmap
+
+Items I have not tackled yet (from [#6585](https://github.com/Eventual-Inc/Daft/issues/6585)):
+
+| Item | Idea |
+|------|------|
+| **Aggregation in local operators** ([@srilman](https://github.com/srilman)) | Move aggregation into local operators instead of micropartition level so hash tables can be recycled and adaptive repartitioning becomes possible later. Likely before parallel hash tables. |
+| **Sharded intra-partition aggregation** | Thread-local hash tables per morsel, merge at end. The dense `group_ids` design should remap cleanly across local group-id spaces. |
+| **SIMD hashing / probing** | Lower priority for integer keys; profile first. |
+| **AnyValue, ApproxCountDistinct** | Harder or lower priority accumulators. |
+
+`Mean`, `Stddev`, and `Var` already decompose into Sum + Count in Daft's planner, so they do not need dedicated inline accumulators.
+
+## What I learned
+
+A few patterns kept showing up:
+
+1. **Fast paths need gates.** An optimization that wins on 32-byte strings can regress on `CHAR(1)` flags. Measuring average key length and bailing early saved a CodSpeed regression on TPC-H Q1.
+2. **Parity tests are non-negotiable.** Every path has tests that run inline and fallback on the same batch and assert identical output. That is how you refactor aggressively without breaking semantics.
+3. **Split PRs by concept, not by file.** Symbolization (#6748) and packed-u64 (#6924) could have been one giant diff. Separating them made review easier and let each stand on its own if the second did not merge immediately.
+
+## Links
+
+- [Daft repository](https://github.com/Eventual-Inc/Daft)
+- [Roadmap issue #6585](https://github.com/Eventual-Inc/Daft/issues/6585)
+- [Original inline aggregation PR #6345](https://github.com/Eventual-Inc/Daft/pull/6345)
+- Merged: [#6604](https://github.com/Eventual-Inc/Daft/pull/6604), [#6642](https://github.com/Eventual-Inc/Daft/pull/6642), [#6656](https://github.com/Eventual-Inc/Daft/pull/6656)
+- Open: [#6748](https://github.com/Eventual-Inc/Daft/pull/6748), [#6924](https://github.com/Eventual-Inc/Daft/pull/6924), [#6975](https://github.com/Eventual-Inc/Daft/pull/6975), [#6984](https://github.com/Eventual-Inc/Daft/pull/6984)
+
+If you are curious about distributed dataframe engines or Rust performance work, Daft is a great place to start. The maintainers are responsive, the roadmap is concrete, and there is real profiling data behind each optimization.
