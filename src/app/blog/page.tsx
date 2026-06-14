@@ -38,7 +38,7 @@ export default function BlogIndexPage() {
             model="/models/apollo.glb"
             scale={3.2}
             cameraZ={9}
-            className="pointer-events-none absolute inset-y-0 right-0 z-0 opacity-20 sm:opacity-40 lg:opacity-100"
+            className="pointer-events-none absolute inset-y-0 -right-6 z-0 opacity-20 sm:right-0 sm:opacity-40 lg:opacity-100"
           />
           <div className="relative z-10">
             <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
