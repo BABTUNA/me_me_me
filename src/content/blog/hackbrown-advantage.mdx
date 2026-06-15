@@ -3,6 +3,7 @@ title: "Winning Hack@Brown with AdVantage"
 date: "2026-05-23"
 summary: "A 36-hour sprint with Tom Almog, a multi-agent ad system, and Best Multi-Agent Workflow on the Fetch.ai track."
 category: technical
+authorship: hybrid
 tags: ["hackathon", "fetch.ai", "multi-agent", "advantage"]
 ---
 
@@ -24,61 +25,27 @@ This past weekend at [Hack@Brown](https://hackbrown.org), my teammate [Tom Almog
 
 ## The pitch
 
-Most small businesses cannot afford the $5K to $50K agencies charge for storyboards and strategy. Without that budget, they skip real research, guess at messaging, and hope their ads work.
-
-AdVantage flips that. You describe your business in plain language. The system runs **location-based research** (competitors, reviews, trends, SEO, and what local customers search for), then delivers three outputs in one flow:
-
-1. A **research PDF** with market gaps, seasonal posting patterns, and keyword intel  
-2. A **concept package** with storyboard, script, budget, filming locations, and hiring guide  
-3. A **ready-to-post viral clip** for TikTok and Reels  
-
-Everything is delivered through **ASI:One** and saved to **Google Drive**.
+Most small businesses cannot afford the $5K to $50K agencies charge for strategy and storyboards, so they skip real research and hope their ads work. AdVantage flips that: you describe your business in plain language, it runs **location-based research** (competitors, reviews, trends, SEO), then delivers three things in one flow. A **research PDF** with market gaps and keyword intel, a **concept package** (storyboard, script, budget, filming + hiring guide), and a **ready-to-post viral clip** for TikTok and Reels. Everything ships through **ASI:One** and saves to **Google Drive**.
 
 ## What we built
 
-AdVantage is a modular multi-agent pipeline:
+A modular multi-agent pipeline where each stage is swappable:
 
-- **Marky (research):** SerpAPI for competitors and related questions, Google and Yelp for reviews, Google Trends / DataForSEO for seasonality, plus a competitor map via Google Static Maps and Geocoding  
-- **Intent and script:** Gemini parses natural-language input; a trend analyzer and script writer turn research into an ad script  
-- **Storyboard:** Vertex AI Imagen generates pencil-sketch frames (with configurable delays to respect rate limits)  
-- **Video:** FFmpeg for Ken Burns storyboard video; VEO 3, Lyria, and Google TTS for photorealistic viral output  
-- **PDF and delivery:** ReportLab for the campaign PDF; a Google Drive MCP agent uploads assets; the orchestrator sends thumbnails and links in chat  
+- **Marky (research):** SerpAPI, Google/Yelp reviews, Google Trends + DataForSEO for seasonality, and a competitor map via Google Maps  
+- **Script:** Gemini parses your input; a trend analyzer and script writer turn research into an ad script  
+- **Visuals:** Vertex AI Imagen for pencil-sketch storyboards; FFmpeg + VEO 3, Lyria, and Google TTS for the final viral clip  
+- **Delivery:** ReportLab for the PDF, a Google Drive MCP agent for uploads, and the orchestrator dropping thumbnails + links in chat  
 
-**Stack:** Python, Fetch.ai Chat Protocol, Agentverse / ASI:One, SerpAPI, Vertex AI (Imagen), Gemini, ReportLab, FFmpeg, Google Maps APIs, Google Drive MCP.
-
-Each stage (research, script, images, video, PDF, Drive) is swappable so we can upgrade pieces without rewriting the whole system.
+**Stack:** Python, Fetch.ai Chat Protocol, Agentverse / ASI:One, SerpAPI, Vertex AI, Gemini, ReportLab, FFmpeg, Google Maps APIs, Google Drive MCP.
 
 ## The 36 hours
 
-We got paid **$500 big ones** to stay up **36 hours straight**. From shipping new ideas every couple hours to nearly crashing out at 4 a.m., it was one of the most rewarding builds I have done.
-
-Some problems we actually hit (and fixed):
-
-- **Imagen rate limits** causing image failures → added `IMAGEN_DELAY_SECONDS` (30s default) between calls  
-- **Black video thumbnails** → sample multiple frames and pick the first non-black one (mean brightness above 15)  
-- **VEO + Lyria + TTS ordering** → careful pipeline timing so music and voiceover land correctly  
-- **Agentverse storage webhooks** → fallbacks when async storage calls lag  
-- **Competitor map missing addresses** → extended Marky’s Competitor Insight model with an address field for geocoding  
-- **Robotic UX** → rewrote copy in plain language, added progress check-ins, simplified final replies to thumbnail + links  
+We got paid **$500 big ones** to stay up **36 hours straight**, shipping new ideas every couple hours and nearly crashing out at 4 a.m. A few things we hit and fixed: Imagen rate limits (added a 30s delay between calls), black video thumbnails (sample frames, pick the first non-black one), VEO/Lyria/TTS ordering, and robotic UX (rewrote copy in plain language with progress check-ins).
 
 ## What I took away
 
-Market research and creative generation work best as **separate agent stages**: research first, then script and visuals. Fetch’s Chat Protocol made it straightforward to add image previews and thumbnail-plus-links in ASI:One. Progress callbacks matter for long-running pipelines. Graceful fallbacks (maps when geocoding fails, storage when Agentverse is slow, delays for Imagen) kept demos from dying on stage.
-
-Back-to-back hackathon wins with Tom have been a blast. Met a ton of people at Brown, and I am already looking forward to the next one.
+Market research and creative generation work best as **separate agent stages**, and Fetch’s Chat Protocol made image previews and thumbnail-plus-links easy in ASI:One. Progress callbacks and graceful fallbacks kept the demo from dying on stage. Back-to-back hackathon wins with Tom have been a blast, and I am already looking forward to the next one.
 
 ## Shoutouts
 
-Huge thanks to **Rajashekar V** from [Fetch.ai](https://fetch.ai) for the workshops, help during development, and merch. Could not have polished the agent workflow without that support.
-
-## What is next for AdVantage
-
-From the Devpost roadmap:
-
-- Cloud deployment for 24/7 availability  
-- Payment Protocol for monetization  
-- A/B test variant generation  
-- Multi-language support  
-- Direct TikTok / Instagram API integration for publishing  
-
-If you are building multi-agent systems or hacking on Fetch.ai tooling, [reach out](mailto:benbarrera13@gmail.com). Always down to talk agents, ads, and sleep-deprived demo prep.
+Huge thanks to **Rajashekar V** from [Fetch.ai](https://fetch.ai) for the workshops, dev help, and merch. If you are building multi-agent systems, [reach out](mailto:benbarrera13@gmail.com). Always down to talk agents, ads, and sleep-deprived demo prep.
