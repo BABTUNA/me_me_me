@@ -8,7 +8,7 @@ export type Experience = {
 
 export const experience: Experience[] = [
   {
-    company: "Leidos",
+    company: "Northrop Grumman",
     role: "Software Engineer Intern (Co-op)",
     location: "St. Petersburg, FL",
     period: "Oct 2025 to Present",
@@ -37,16 +37,6 @@ export const experience: Experience[] = [
       "Implemented workflow using AWS SQS, Lambda, and API Gateway to resend and resolve over 700 failed webhook subscription events weekly",
       "Improved backend performance by building 6 new REST endpoints in Java (Spring Boot) and boosting query speed by 22% with index-backed lookups, prefix-based queries, and 4 global secondary indexes",
       "Developed React-based subscription querying tool and enhanced GraphQL endpoint with webhook schema integration, saving ~5 hours weekly for developers",
-    ],
-  },
-  {
-    company: "Bentley Systems",
-    role: "Software Engineer Intern",
-    location: "Philadelphia, PA (remote)",
-    period: "Jan 2025 to Apr 2025",
-    highlights: [
-      "Refactored legacy C# (.NET) RESTful API endpoints for wind turbine energy calculation and optimized response time by 9% via asynchronous calling, database indexing, and caching",
-      "Configured build pipelines for containerized (Docker) .NET service with Azure DevOps CI/CD YAML and improved deployment time by 13% with concurrency jobs",
     ],
   },
 ];

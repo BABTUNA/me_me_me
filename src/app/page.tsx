@@ -6,8 +6,18 @@ import { StatueBust } from "@/components/statue-bust-lazy";
 import { PostCategoryBadge } from "@/components/post-category-badge";
 import { getAllPosts } from "@/lib/posts";
 
-// Kick off the GLB fetch during HTML parse — the bust appears much faster.
+// Kick off the GLB fetch during HTML parse so the bust appears much faster.
 preload("/models/apollo.glb", { as: "fetch", crossOrigin: "anonymous" });
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+}
 
 export default function HomePage() {
   const recentPosts = getAllPosts().slice(0, 3);
@@ -33,10 +43,9 @@ export default function HomePage() {
               <br />
               <span className="text-[var(--color-accent)]">sometimes</span>.
             </h1>
-            <p className="mt-8 max-w-xl text-base text-[var(--color-fg)] sm:text-lg">
-              I&apos;m Ben, a CS student at USF and software engineer co-op at
-              Leidos. I build backend systems, ship side projects, and write
-              about how things work.
+            <p className="mt-6 max-w-xl text-[var(--color-fg)]">
+              I&apos;m Ben, a CS student at USF and 5x SWE intern, currently at
+              LinkedIn.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
@@ -53,7 +62,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-10 flex items-end justify-between">
             <div>
-              <div className="num mb-2">/ 03 writing</div>
+              <div className="num mb-2">/ 02 writing</div>
               <h2 className="text-2xl font-medium tracking-tight sm:text-3xl">
                 From the blog
               </h2>
@@ -77,7 +86,7 @@ export default function HomePage() {
                   >
                     <div className="mb-4 flex flex-wrap items-center gap-2">
                       <PostCategoryBadge category={post.category} />
-                      <span className="num">{post.date}</span>
+                      <span className="num">{formatDate(post.date)}</span>
                     </div>
                     <div className="text-base font-medium leading-snug">
                       {post.title}

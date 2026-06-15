@@ -14,9 +14,7 @@ export const metadata = {
 
 const facts: { label: string; value: string }[] = [
   { label: "based", value: "Tampa, FL" },
-  { label: "role", value: "Software Engineer Intern @ Leidos" },
-  { label: "education", value: "USF · BS Computer Science · 3.88 GPA" },
-  { label: "graduating", value: "May 2027" },
+  { label: "education", value: "USF · BS Computer Science" },
 ];
 
 const stack: { label: string; items: string[] }[] = [
@@ -83,23 +81,27 @@ export default function AboutPage() {
           <div className="bg-[var(--color-bg)] p-8 sm:col-span-2">
             <div className="num mb-6">/ 01 bio</div>
             <div className="space-y-5 text-[var(--color-fg)] leading-relaxed">
+              <p>Hello hello 👋,</p>
               <p>
-                I&apos;m a Computer Science student at the University of South
-                Florida (GPA 3.88, expected graduation May 2027) and a Software
-                Engineer Intern (Co-op) at Leidos in St. Petersburg, FL.
+                I&apos;m Ben, a CS student at the University of South Florida!
+                Over multiple internships, I&apos;ve worked on Rust-based
+                distributed systems, Java-based backend services, event-driven
+                pipelines, and nearline data processing systems across fintech,
+                AI platforms, and military technology. I&apos;m mainly focused on
+                distributed systems and infrastructure work these days, so if
+                you&apos;re working on something cool, reach out and we can chat!
               </p>
               <p>
-                I contribute to Java based backend services for an operational
-                readiness platform monitoring military equipment health and fault
-                status. I&apos;ve also interned at Gradual, Bill, and Bentley
-                Systems, working on backend APIs, event pipelines, AI agents, and
-                cloud infrastructure.
-              </p>
-              <p>
-                As Technology Lead for the USF ColorStack Chapter, I coordinated
-                tech curriculum and presented 4 workshops to over 150 students
-                teaching data structures and algorithms, backend (Django),
-                frontend (React), and cloud deployment (AWS).
+                I also occasionally do research on{" "}
+                <a
+                  href="https://scholar.google.com/citations?user=GEPH-8gAAAAJ&hl=en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="content-link"
+                >
+                  Google Scholar
+                </a>
+                .
               </p>
             </div>
           </div>
@@ -120,10 +122,37 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* STACK */}
+      <section className="border-b border-[var(--color-border)]">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="num mb-8">/ 03 stack</div>
+          <div className="grid gap-8 sm:grid-cols-3">
+            {stack.map((s) => (
+              <div key={s.label}>
+                <div className="mb-3 font-mono text-[10px] uppercase tracking-wider text-[var(--color-fg-dim)]">
+                  {s.label}
+                </div>
+                <ul className="space-y-1.5">
+                  {s.items.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <span className="inline-block h-1 w-1 bg-[var(--color-accent)]" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* EXPERIENCE */}
       <section className="border-b border-[var(--color-border)]">
         <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="num mb-8">/ 03 experience</div>
+          <div className="num mb-8">/ 04 experience</div>
           <ul className="mx-auto max-w-2xl divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
             {experience.map((job) => (
               <li key={job.company} className="py-8">
@@ -152,33 +181,6 @@ export default function AboutPage() {
               </li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      {/* STACK */}
-      <section className="border-b border-[var(--color-border)]">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="num mb-8">/ 04 stack</div>
-          <div className="grid gap-8 sm:grid-cols-3">
-            {stack.map((s) => (
-              <div key={s.label}>
-                <div className="mb-3 font-mono text-[10px] uppercase tracking-wider text-[var(--color-fg-dim)]">
-                  {s.label}
-                </div>
-                <ul className="space-y-1.5">
-                  {s.items.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <span className="inline-block h-1 w-1 bg-[var(--color-accent)]" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
