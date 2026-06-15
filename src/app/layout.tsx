@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s | Ben Barrera",
   },
   description:
-    "Ben Barrera, CS student at USF and software engineer co-op at Leidos. Projects, writing, and contact.",
+    "Ben Barrera, CS student at USF and software engineer co-op at Northrop Grumman. Projects, writing, and contact.",
   metadataBase: new URL("https://example.com"),
 };
 
@@ -54,7 +54,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col" suppressHydrationWarning>
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
