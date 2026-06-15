@@ -4,6 +4,9 @@ import { Arrow } from "@/components/arrow";
 import { BinaryBackground } from "@/components/binary-background";
 import { StatueBust } from "@/components/statue-bust-lazy";
 import { PostCategoryBadge } from "@/components/post-category-badge";
+import { AuthorshipBadge } from "@/components/authorship-badge";
+import { ViewCounter } from "@/components/view-counter";
+import { AUTHORSHIP } from "@/lib/blog-categories";
 import { getAllPosts } from "@/lib/posts";
 
 preload("/models/apollo.glb", { as: "fetch", crossOrigin: "anonymous" });
@@ -61,7 +64,26 @@ export default function BlogIndexPage() {
               No posts yet. Stay tuned.
             </div>
           ) : (
-            <ul className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+            <>
+              <div className="mb-8 flex flex-col gap-2 border border-[var(--color-border)] bg-[var(--color-surface)]/40 p-4 text-xs text-[var(--color-fg-muted)]">
+                <span className="num mb-1">/ how each post was written</span>
+                {Object.values(AUTHORSHIP).map((a) => (
+                  <span key={a.label} className="flex items-baseline gap-2">
+                    <span
+                      className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0"
+                      style={{ background: a.dot }}
+                      aria-hidden
+                    />
+                    <span>
+                      <span className="font-mono uppercase tracking-wider text-[var(--color-fg)]">
+                        {a.label}
+                      </span>
+                      : {a.description}
+                    </span>
+                  </span>
+                ))}
+              </div>
+              <ul className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
               {posts.map((post, i) => (
                 <li key={post.slug}>
                   <Link
@@ -77,6 +99,8 @@ export default function BlogIndexPage() {
                     <div>
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <PostCategoryBadge category={post.category} />
+                        <AuthorshipBadge authorship={post.authorship} />
+                        <ViewCounter slug={post.slug} />
                       </div>
                       <div className="text-lg font-medium leading-snug">
                         {post.title}
@@ -91,7 +115,8 @@ export default function BlogIndexPage() {
                   </Link>
                 </li>
               ))}
-            </ul>
+              </ul>
+            </>
           )}
         </div>
       </section>

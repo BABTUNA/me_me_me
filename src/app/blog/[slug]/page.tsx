@@ -4,6 +4,8 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import { Arrow } from "@/components/arrow";
 import { PostCategoryBadge } from "@/components/post-category-badge";
+import { AuthorshipBadge } from "@/components/authorship-badge";
+import { ViewCounter } from "@/components/view-counter";
 import { getAllPosts, getPost } from "@/lib/posts";
 import { BlogImage, DriveEmbed, YouTube } from "@/components/mdx-media";
 import { useMDXComponents } from "../../../../mdx-components";
@@ -63,7 +65,9 @@ export default async function PostPage({
       <header className="mt-10 border-b border-[var(--color-border)] pb-10">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <PostCategoryBadge category={post.meta.category} />
+          <AuthorshipBadge authorship={post.meta.authorship} />
           <span className="num">{formatDate(post.meta.date)}</span>
+          <ViewCounter slug={slug} increment />
         </div>
         <h1 className="text-4xl font-medium leading-tight tracking-tight sm:text-5xl">
           {post.meta.title}
