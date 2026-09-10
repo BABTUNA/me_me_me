@@ -1,11 +1,6 @@
-import { preload } from "react-dom";
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
-import { BinaryBackground } from "@/components/binary-background";
-import { StatueBust } from "@/components/statue-bust-lazy";
 import { experience } from "@/content/experience";
-
-preload("/models/apollo.glb", { as: "fetch", crossOrigin: "anonymous" });
 
 export const metadata = {
   title: "About",
@@ -51,18 +46,8 @@ export default function AboutPage() {
   return (
     <>
       {/* HERO */}
-      <section className="relative overflow-hidden border-b border-[var(--color-border)]">
-        <BinaryBackground seed={303} />
-        <div className="relative z-10 mx-auto flex min-h-[20rem] max-w-6xl flex-col justify-center px-6 py-14 sm:min-h-[24rem]">
-          <StatueBust
-            priority
-            width="clamp(280px, 48vw, 600px)"
-            height="100%"
-            model="/models/apollo.glb"
-            scale={3.2}
-            cameraZ={9}
-            className="pointer-events-none absolute inset-y-0 -right-6 z-0 translate-x-[22%] opacity-20 sm:right-0 sm:translate-x-0 sm:opacity-40 lg:opacity-100"
-          />
+      <section className="grid-bg relative overflow-hidden border-b border-[var(--color-border)]">
+        <div className="relative z-10 mx-auto flex min-h-[16rem] max-w-6xl flex-col justify-center px-6 py-14 sm:min-h-[20rem]">
           <div className="relative z-10">
             <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
               Hi, I&apos;m Ben.
@@ -185,7 +170,7 @@ export default function AboutPage() {
       </section>
 
       {/* CONTACT CTA */}
-      <section>
+      <section id="contact">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="num mb-6">/ 05 say hi</div>
           <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">

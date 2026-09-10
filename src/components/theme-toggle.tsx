@@ -36,7 +36,7 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={label}
       title={label}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-transparent text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-border)] hover:text-[var(--color-fg)]"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-sm border border-transparent text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-border)] hover:text-[var(--color-fg)]"
     >
       {/* Render a neutral placeholder until mounted so SSR markup stays stable */}
       {!mounted ? (

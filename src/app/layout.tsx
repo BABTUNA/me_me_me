@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,8 +23,8 @@ export const metadata: Metadata = {
     template: "%s | Ben Barrera",
   },
   description:
-    "Ben Barrera, CS student at USF and software engineer co-op at Northrop Grumman. Projects, writing, and contact.",
-  metadataBase: new URL("https://example.com"),
+    "Ben Barrera is a CS student at USF working on distributed systems, backend services, and data infrastructure. Explore projects, technical writing, and experience.",
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
 };
 
 // Inline pre-hydration script — applies saved theme before paint, avoiding FOUC.
@@ -55,8 +56,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-screen flex flex-col" suppressHydrationWarning>
+        <a href="#main-content" className="skip-link">Skip to content</a>
         <SiteHeader />
-        <main className="flex-1">{children}</main>
+        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">{children}</main>
         <SiteFooter />
       </body>
     </html>

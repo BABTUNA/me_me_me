@@ -15,12 +15,12 @@ import { StatueBustLoader } from "./statue-bust-loader";
 const DEFAULT_MODEL = "/models/apollo.glb";
 const DRACO_DECODER = "https://www.gstatic.com/draco/versioned/decoders/1.5.7/";
 
-function Model({ url, scale = 1 }: { url: string; scale?: number }) {
+function Model({ url, scale = 1, reducedMotion }: { url: string; scale?: number; reducedMotion: boolean }) {
   const { scene } = useGLTF(url, DRACO_DECODER, false);
   const ref = useRef<Group>(null);
 
   useFrame((_, dt) => {
-    if (ref.current) ref.current.rotation.y += dt * 0.15;
+    if (ref.current && !reducedMotion) ref.current.rotation.y += dt * 0.15;
   });
 
   return (
@@ -40,7 +40,7 @@ type StatueBustProps = {
   cameraZ?: number;
   /** Hero busts: fetch + mount immediately instead of waiting for intersection. */
   priority?: boolean;
-  /** Post FX are pretty but cost GPU time; off by default on coarse pointers. */
+  /** Optional post-processing; off by default to keep the decoration quiet. */
   effects?: boolean;
 };
 
@@ -62,11 +62,17 @@ export function StatueBust({
   const [loaded, setLoaded] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [enableEffects, setEnableEffects] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(true);
 
-  const useEffects =
-    effects ??
-    (typeof window !== "undefined" &&
-      window.matchMedia("(pointer: fine)").matches);
+  const useEffects = !reducedMotion && (effects ?? false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     setLoaded(false);
@@ -84,17 +90,13 @@ export function StatueBust({
   }, [inView, loaded]);
 
   useEffect(() => {
-    if (priority) return;
     const node = containerRef.current;
     if (!node) return;
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          io.disconnect();
-        }
+        setInView(entry.isIntersecting);
       },
-      { rootMargin: "400px" },
+      { rootMargin: "100px" },
     );
     io.observe(node);
     return () => io.disconnect();
@@ -119,8 +121,10 @@ export function StatueBust({
         <StatueBustLoader className="pointer-events-none absolute inset-0 h-full w-full" />
       )}
 
-      {inView && (
+      {(inView || loaded) && (
         <Canvas
+          frameloop={reducedMotion || !inView ? "demand" : "always"}
+          fallback={null}
           camera={{ position: [0, 0, cameraZ], fov: 35 }}
           gl={{
             alpha: true,
@@ -163,13 +167,13 @@ export function StatueBust({
             }
           >
             <Center>
-              <Model url={model} scale={scale} />
+              <Model url={model} scale={scale} reducedMotion={reducedMotion} />
             </Center>
             <Preload all />
             <FadeInOnReady onReady={() => setLoaded(true)} />
           </Suspense>
 
-          {enableEffects && (
+          {enableEffects && inView && (
             <EffectComposer multisampling={0} enableNormalPass={false}>
               <ChromaticAberration
                 offset={new Vector2(0.0025, 0.0018)}

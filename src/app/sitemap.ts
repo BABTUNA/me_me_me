@@ -1,16 +1,16 @@
 import type { MetadataRoute } from "next";
 import { getAllPosts } from "@/lib/posts";
-
-const SITE = "https://example.com";
+import { siteUrl } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticRoutes = ["", "/blog", "/about"].map((path) => ({
-    url: `${SITE}${path}`,
-    lastModified: new Date(),
+  if (!siteUrl) return [];
+
+  const staticRoutes = ["", "/work", "/blog", "/about"].map((path) => ({
+    url: `${siteUrl}${path}`,
   }));
 
   const postRoutes = getAllPosts().map((p) => ({
-    url: `${SITE}/blog/${p.slug}`,
+    url: `${siteUrl}/blog/${p.slug}`,
     lastModified: new Date(p.date),
   }));
 
