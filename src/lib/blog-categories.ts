@@ -22,7 +22,7 @@ export const AUTHORSHIP = {
     description: "Written entirely by me, no AI.",
   },
   hybrid: {
-    label: "Me + AI",
+    label: "Hybrid",
     dot: "#f5a623",
     description: "Written by me with help from AI for editing and structure.",
   },

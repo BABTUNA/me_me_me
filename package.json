@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "optimize-models": "gltf-transform optimize public/models/rossbandiger.original.glb public/models/rossbandiger.glb --compress draco --texture-compress webp && gltf-transform optimize public/models/apollo.original.glb public/models/apollo.glb --compress draco --texture-compress webp"
+    "optimize-models": "gltf-transform optimize public/models/rossbandiger.original.glb public/models/rossbandiger.glb --compress draco --texture-compress webp && gltf-transform optimize public/models/apollo.original.glb public/models/apollo.glb --compress draco --texture-compress webp",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@mdx-js/loader": "3.1.0",

@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format-date";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
@@ -28,16 +29,6 @@ export async function generateMetadata({
   };
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 export default async function PostPage({
   params,
 }: {
@@ -66,7 +57,7 @@ export default async function PostPage({
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <PostCategoryBadge category={post.meta.category} />
           <AuthorshipBadge authorship={post.meta.authorship} />
-          <span className="num">{formatDate(post.meta.date)}</span>
+          <time className="num" dateTime={post.meta.date}>{formatDate(post.meta.date, "long")}</time>
           <ViewCounter slug={slug} increment />
         </div>
         <h1 className="text-4xl font-medium leading-tight tracking-tight sm:text-5xl">

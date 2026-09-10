@@ -1,8 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
 
 const nav = [
   { href: "/", label: "Home" },
+  { href: "/work", label: "Work" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
 ];
@@ -21,28 +25,38 @@ const socials = [
 ];
 
 export function SiteHeader() {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+      <div className="site-header-inner mx-auto flex max-w-6xl items-center justify-between px-6">
         <Link
           href="/"
-          className="flex items-center gap-2 font-mono text-sm tracking-tight"
+          className="site-brand flex items-center gap-2 font-mono text-sm tracking-tight"
+          aria-label="Ben Barrera — home"
         >
           <span className="inline-block h-2 w-2 bg-[var(--color-accent)]" />
           <span>ben.barrera</span>
         </Link>
 
-        <nav className="flex items-center gap-1 text-sm">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-sm px-2 py-1.5 text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-fg)] sm:px-3"
-            >
-              {item.label}
-            </Link>
-          ))}
-          <span className="mx-1 h-4 w-px bg-[var(--color-border)] sm:mx-2" />
+        <nav aria-label="Main navigation" className="site-nav flex items-center gap-1 text-sm">
+          {nav.map((item) => {
+            const active = item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className="nav-link rounded-sm px-3 py-3 text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-fg)]"
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="site-header-tools flex items-center gap-1">
           {socials.map(({ href, label, icon: Icon }) => (
             <a
               key={href}
@@ -51,13 +65,13 @@ export function SiteHeader() {
               rel="noopener noreferrer"
               aria-label={label}
               title={label}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-transparent text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-border)] hover:text-[var(--color-fg)]"
+              className="hidden h-11 w-11 items-center justify-center rounded-sm border border-transparent text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-border)] hover:text-[var(--color-fg)] sm:inline-flex"
             >
               <Icon />
             </a>
           ))}
           <ThemeToggle />
-        </nav>
+        </div>
       </div>
     </header>
   );

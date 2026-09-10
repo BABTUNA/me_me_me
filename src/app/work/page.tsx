@@ -1,11 +1,6 @@
-import { preload } from "react-dom";
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
-import { BinaryBackground } from "@/components/binary-background";
-import { StatueBust } from "@/components/statue-bust-lazy";
 import { projects } from "@/content/projects";
-
-preload("/models/apollo.glb", { as: "fetch", crossOrigin: "anonymous" });
 
 export const metadata = {
   title: "Work",
@@ -21,18 +16,8 @@ const statusLabel: Record<string, string> = {
 export default function WorkPage() {
   return (
     <>
-      <section className="relative overflow-hidden border-b border-[var(--color-border)]">
-        <BinaryBackground seed={101} />
-        <div className="relative z-10 mx-auto flex min-h-[20rem] max-w-6xl flex-col justify-center px-6 py-14 sm:min-h-[24rem]">
-          <StatueBust
-            priority
-            width="clamp(280px, 48vw, 600px)"
-            height="100%"
-            model="/models/apollo.glb"
-            scale={3.2}
-            cameraZ={9}
-            className="pointer-events-none absolute inset-y-0 -right-6 z-0 translate-x-[22%] opacity-20 sm:right-0 sm:translate-x-0 sm:opacity-40 lg:opacity-100"
-          />
+      <section className="grid-bg relative overflow-hidden border-b border-[var(--color-border)]">
+        <div className="relative z-10 mx-auto flex min-h-[16rem] max-w-6xl flex-col justify-center px-6 py-14 sm:min-h-[20rem]">
           <div className="relative z-10">
             <h1 className="max-w-3xl text-5xl font-medium leading-[1.05] tracking-tight sm:text-7xl">
               Things I&apos;ve built,
@@ -42,8 +27,8 @@ export default function WorkPage() {
               <span className="text-[var(--color-accent)]">shipped</span>.
             </h1>
             <p className="mt-6 max-w-xl text-[var(--color-fg)]">
-              A running list of side projects, contributions, and experiments.
-              Some are live, some are in progress, some are gracefully archived.
+              Side projects, open-source contributions, and experiments in
+              systems, data, and software that helps people learn.
             </p>
           </div>
         </div>
@@ -52,16 +37,16 @@ export default function WorkPage() {
       <section>
         <div className="mx-auto max-w-6xl px-6 py-16">
           <ul className="grid gap-px bg-[var(--color-border)] sm:grid-cols-2">
-            {projects.map((p, i) => (
+            {projects.map((p) => (
               <li
                 key={p.slug}
                 id={p.slug}
                 className="bg-[var(--color-bg)]"
               >
-                <article className="flex h-full flex-col p-8">
-                  <div className="mb-6 flex items-start justify-between">
+                <article className="flex h-full flex-col p-6 sm:p-8">
+                  <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
                     <span className="num">
-                      {String(i + 1).padStart(2, "0")} / {p.year}
+                      {p.year}{p.category ? ` / ${p.category}` : ""}
                     </span>
                     {p.status && (
                       <span className="num flex items-center gap-2">
@@ -103,12 +88,12 @@ export default function WorkPage() {
                         href={p.href}
                         className="arrow-link text-sm font-medium"
                       >
-                        view project <Arrow variant="accent" />
+                        {p.linkLabel ?? "View project"} <Arrow variant="accent" />
                       </Link>
                     ) : (
-                      <span className="text-xs text-[var(--color-fg-dim)] font-mono">
-                        link coming soon
-                      </span>
+                      <Link href="/about#contact" className="arrow-link text-sm text-[var(--color-fg-muted)]">
+                        Ask me about this <Arrow />
+                      </Link>
                     )}
                   </div>
                 </article>
