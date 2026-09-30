@@ -99,8 +99,18 @@ At small sizes the copy wins. The lines cross near a million rows, and past that
 
 Latency is the gap between the source commit time and the merge time stamped on each destination row. The [benchmark](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/bench-vs-batch.sh) measured CDC once on terra, on a single-broker laptop, and reused it across table sizes, so the table shows the shape of the tradeoff, not CDC latency at scale.
 
+## Try it live
+
+The pipeline runs on a small VM. The console below is wired to it: change the demo row on the source and watch it land, then ask the same question of a vector copy that is seconds behind the source and of a snapshot that refreshes every five minutes.
+
+<BartieLive />
+
+The three numbers at the top say where the latency is, not just how much. Reader lag is the source WAL ahead of the reader; backlog is what the broker holds that the writer has not applied; merge p95 is the destination's `MERGE` time. Whichever one grows names the bottleneck. Artie's own MCP reports per-table latency and stops there; Bartie's [control API](https://github.com/BABTUNA/Bartie/blob/main/docs/phase-6-live.md) returns the same per-table shape plus these three, and a [small MCP server](https://github.com/BABTUNA/Bartie/tree/main/mcp) generated from its OpenAPI contract exposes them to Claude Code under Artie's tool names, plus a `pipeline_verify` tool their product cannot offer because it cannot read the destination.
+
+The second destination is the reason for the two answers. A [second consumer](https://github.com/BABTUNA/Bartie/tree/main/internal/vecwriter) on the same Redpanda topic embeds each changed row into pgvector, committing offsets only after the vector transaction commits, the same contract as the writer. An AI reading a nightly copy of your data will confidently tell you yesterday; this is that argument as a working thing.
+
 ## Where the project stops
 
-Bartie requires primary keys and does not yet support schema evolution, `TRUNCATE`, or resumable backfill.
+Bartie requires primary keys and does not yet support schema evolution, `TRUNCATE`, or resumable backfill. The vector destination embeds two tables and skips re-embedding when an update leaves every embedded column untouched; it does not handle deletes of the parent rows it enriches from.
 
 **[Explore Bartie on GitHub](https://github.com/BABTUNA/Bartie)** or watch the demo above.
