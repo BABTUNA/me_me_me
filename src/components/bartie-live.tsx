@@ -125,6 +125,7 @@ export function BartieLive() {
         <Stat label="merge p95" value={usage?.mergeMs && usage.mergeMs.samples > 0 ? `${usage.mergeMs.p95.toFixed(0)} ms` : "—"} hint="destination MERGE time" />
       </div>
 
+      <TablePanel disabled={offline} now={now} />
       <Poke disabled={offline} now={now} onPoked={() => { fastUntil.current = Date.now() + 15000; }} />
       <Ask disabled={offline} now={now} />
       <VerifyRow disabled={offline} />
@@ -158,6 +159,105 @@ function Stat({ label, value, hint }: { label: string; value: string; hint: stri
       <div className="num">{label}</div>
       <div className="mt-1 font-mono text-lg tabular-nums">{value}</div>
     </div>
+  );
+}
+
+// --- beat 0: watch traffic land --------------------------------------------
+
+type TableRows = {
+  table: string;
+  pk: string;
+  recency: string;
+  source: Record<string, unknown>[];
+  dest: (Record<string, unknown> & { __bartie_updated_at?: string })[];
+};
+
+const TABLES = ["public.observations", "public.animals", "public.watering_holes"] as const;
+const HIDDEN = new Set(["__bartie_commit_ts", "__bartie_updated_at"]);
+
+function cell(v: unknown): string {
+  if (v === null || v === undefined) return "∅";
+  const s = typeof v === "string" ? v : JSON.stringify(v);
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) return s.slice(11, 19);
+  return s.length > 48 ? s.slice(0, 47) + "…" : s;
+}
+
+function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
+  const [table, setTable] = useState<(typeof TABLES)[number]>(TABLES[0]);
+  const [rows, setRows] = useState<TableRows | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const tick = () =>
+      api<TableRows>(`/demo/table/${table}?limit=6`)
+        .then((r) => { if (active) setRows(r); })
+        .catch(() => {});
+    tick();
+    const id = setInterval(tick, 2000);
+    return () => { active = false; clearInterval(id); };
+  }, [table]);
+
+  const columns = (() => {
+    const first = rows?.source[0] ?? rows?.dest[0];
+    if (!rows || !first) return [];
+    const rest = Object.keys(first).filter((k) => !HIDDEN.has(k) && k !== rows.pk && k !== rows.recency);
+    return [rows.pk, rows.recency, ...rest];
+  })();
+
+  const grid = (side: "source" | "dest") => (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse font-mono text-[11px]">
+        <thead>
+          <tr className="text-left text-[var(--color-fg-dim)]">
+            {columns.map((c) => <th key={c} className="whitespace-nowrap px-2 py-1 font-normal">{c}</th>)}
+            {side === "dest" ? <th className="whitespace-nowrap px-2 py-1 font-normal">applied</th> : null}
+          </tr>
+        </thead>
+        <tbody>
+          {(rows?.[side] ?? []).map((r) => {
+            const applied = side === "dest" ? (r as { __bartie_updated_at?: string }).__bartie_updated_at : undefined;
+            const fresh = applied ? now - new Date(applied).getTime() < 6000 : false;
+            return (
+              <tr key={String(r[rows!.pk])} className={`border-t border-[var(--color-border)] ${fresh ? "bg-[var(--color-accent-soft)]" : ""}`}>
+                {columns.map((c) => <td key={c} className="max-w-[16rem] truncate px-2 py-1 align-top" title={String(r[c] ?? "")}>{cell(r[c])}</td>)}
+                {side === "dest" ? <td className="whitespace-nowrap px-2 py-1 text-[var(--color-fg-dim)]">{applied ? ago(applied, now) : "—"}</td> : null}
+              </tr>
+            );
+          })}
+          {rows && rows[side].length === 0 ? (
+            <tr><td colSpan={columns.length + 1} className="px-2 py-2 text-[var(--color-fg-dim)]">no rows</td></tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  return (
+    <section className="border-b border-[var(--color-border)] px-4 py-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="font-medium">1. Watch rows land</h3>
+        <div className="flex gap-1">
+          {TABLES.map((t) => (
+            <button
+              key={t}
+              type="button"
+              disabled={disabled}
+              onClick={() => setTable(t)}
+              className={`rounded-sm px-2 py-0.5 font-mono text-[11px] ${t === table ? "bg-[var(--color-fg)] text-[var(--color-bg)]" : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"}`}
+            >
+              {t.replace("public.", "")}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="mt-1 text-[11px] text-[var(--color-fg-dim)]">
+        newest rows by {rows?.recency ?? "recency"} on each side. A ranger-log writer adds a sighting every couple of seconds; highlighted rows landed in the last few seconds.
+      </p>
+      <div className="mt-3 grid gap-px bg-[var(--color-border)]">
+        <div className="bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">source (terra)</div>{grid("source")}</div>
+        <div className="bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">destination (warehouse)</div>{grid("dest")}</div>
+      </div>
+    </section>
   );
 }
 
@@ -210,7 +310,7 @@ function Poke({ disabled, now, onPoked }: { disabled: boolean; now: number; onPo
   return (
     <section className="border-b border-[var(--color-border)] px-4 py-4">
       <div className="flex items-baseline justify-between">
-        <h3 className="font-medium">1. Change a row on the source</h3>
+        <h3 className="font-medium">2. Change a row on the source</h3>
         <span className="num">observations #{DEMO_PK}</span>
       </div>
       <textarea
@@ -296,7 +396,7 @@ function Ask({ disabled, now }: { disabled: boolean; now: number }) {
   return (
     <section className="border-b border-[var(--color-border)] px-4 py-4">
       <div className="flex items-baseline justify-between">
-        <h3 className="font-medium">2. Ask the replicated data</h3>
+        <h3 className="font-medium">3. Ask the replicated data</h3>
         <span className="num">pgvector · same question twice</span>
       </div>
       <div className="mt-3 flex gap-2">
@@ -366,7 +466,7 @@ function VerifyRow({ disabled }: { disabled: boolean }) {
 
   return (
     <section className="flex flex-wrap items-center gap-3 px-4 py-4">
-      <h3 className="font-medium">3. Prove the copy is exact</h3>
+      <h3 className="font-medium">4. Prove the copy is exact</h3>
       <Btn onClick={run} disabled={disabled || busy} subtle>{busy ? "checksumming…" : "Verify"}</Btn>
       {res ? (
         <span className={`font-mono text-xs ${res.match ? "text-emerald-500" : "text-amber-500"}`}>
