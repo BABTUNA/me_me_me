@@ -50,7 +50,7 @@ The [writer](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302
 
 That leaves an unavoidable crash window. The destination can commit successfully while the offset remains uncommitted. After a restart, those messages can arrive again. Bartie handles that window with **at-least-once delivery and idempotent application of row state**.
 
-For example, replaying an update that sets an animal's status to `adult` sets the same value again. Replaying a delete leaves the row absent. This is the intended behavior for a live copy of a table; the destination is not an archive of every intermediate change.
+For example, replaying an update that sets an animal's status to `adult` sets the same value again. Replaying a delete leaves the row absent. This is the intended behavior for a live copy of a table. The destination is not an archive of every intermediate change.
 
 ## Why the writer uses staging and merge
 
@@ -84,9 +84,9 @@ These scripts exercise concrete failure scenarios. They do not establish recover
 
 ## Streaming versus re-copying the table
 
-On a laptop, a change reaches the destination about **1.1 seconds** after it commits on the source ([recorded results](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/README.md#why-streaming-cdc-vs-batch-snapshots)). Most of that is the writer's two-second flush window: smaller batches would show changes sooner, larger ones amortize more merge work.
+On a laptop, a change reaches the destination about **1.1 seconds** after it commits on the source ([recorded results](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/README.md#why-streaming-cdc-vs-batch-snapshots)). Most of that is the writer's two-second flush window.
 
-A latency number needs a baseline. The alternative to CDC is re-copying the table on a schedule, and its freshness floor is how long one full copy takes:
+The alternative to CDC is re-copying the table on a schedule, which can never be fresher than one full copy takes:
 
 | Rows | Full-table copy | Streaming CDC |
 | ---: | ---: | ---: |
@@ -95,9 +95,9 @@ A latency number needs a baseline. The alternative to CDC is re-copying the tabl
 | 1,000,000 | 2.51 s | 1.1 s |
 | 10,000,000 | 44.2 s | 1.1 s |
 
-At small sizes the copy wins. The lines cross near a million rows. Past that, the copy grows with the table while CDC only ever touches the change.
+At small sizes the copy wins. The lines cross near a million rows, and past that the copy grows with the table while CDC only touches the change.
 
-How it's measured: every destination row carries the source commit time and the time the merge applied it, and latency is the difference. That captures the latest change to rows that still exist, not every event. The [benchmark](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/bench-vs-batch.sh) measured the CDC figure once on terra and reused it across table sizes, on a single-broker laptop, so the table shows the shape of the tradeoff, not CDC latency at scale.
+Latency is the gap between the source commit time and the merge time stamped on each destination row. The [benchmark](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/bench-vs-batch.sh) measured CDC once on terra, on a single-broker laptop, and reused it across table sizes, so the table shows the shape of the tradeoff, not CDC latency at scale.
 
 ## Where the project stops
 
