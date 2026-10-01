@@ -238,8 +238,8 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
         {trafficErr ? <span className="text-amber-500">{trafficErr}</span> : null}
       </p>
       <div className="mt-3 grid min-w-0 gap-px bg-[var(--color-border)]">
-        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">source (terra)</div><SideTable side="source" rows={rows} plan={plan} now={now} /></div>
-        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">destination (warehouse)</div><SideTable side="dest" rows={rows} plan={plan} now={now} /></div>
+        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">source (terra)</div><SideTable side="source" rows={rows} plan={plan} now={now} layout="scroll" /></div>
+        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">destination (warehouse)</div><SideTable side="dest" rows={rows} plan={plan} now={now} layout="scroll" /></div>
       </div>
     </section>
   );
