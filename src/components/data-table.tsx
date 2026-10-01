@@ -71,21 +71,29 @@ export function planColumns(rows: TableRows | null): Plan {
   return { columns, widths, flex };
 }
 
+// Two layouts. "fit" squeezes the table into its container (fixed layout,
+// ellipsis on the wordiest column) for the compact live panel. "scroll" shows
+// every value in full, lets the table be as wide as it needs, and scrolls the
+// wrapper horizontally; the primary key column sticks to the left edge so you
+// keep your place.
 export function SideTable({
   side,
   rows,
   plan,
   now,
   freshMs = 6000,
+  layout = "fit",
 }: {
   side: "source" | "dest";
   rows: TableRows | null;
   plan: Plan;
   now: number;
   freshMs?: number;
+  layout?: "fit" | "scroll";
 }) {
   const { columns, widths, flex } = plan;
   const cols = side === "dest" ? [...columns, "applied"] : columns;
+  if (layout === "scroll") return <ScrollTable side={side} rows={rows} columns={columns} cols={cols} now={now} freshMs={freshMs} />;
   const chOf = (c: string) => (c === "applied" ? APPLIED_CH : widths[c]);
   const fixedCh = cols.reduce((sum, c) => sum + (chOf(c) ?? 0) + 0.5, 0);
   const minWidth = `calc(${fixedCh + (flex ? FLEX_MIN_CH : 0)}ch + ${cols.length * CELL_PAD_PX}px)`;
@@ -114,6 +122,60 @@ export function SideTable({
               <tr key={`${String(r[rows!.pk])}-${i}`} className={`border-t border-[var(--color-border)] ${fresh ? "bg-[var(--color-accent-soft)]" : ""}`}>
                 {columns.map((c) => <td key={c} className="truncate px-2 py-1 align-top" title={String(r[c] ?? "")}>{cell(r[c])}</td>)}
                 {side === "dest" ? <td className="truncate px-2 py-1 align-top text-[var(--color-fg-dim)]">{applied ? ago(applied, now) : "—"}</td> : null}
+              </tr>
+            );
+          })}
+          {rows && list.length === 0 ? (
+            <tr><td colSpan={cols.length} className="px-2 py-2 text-[var(--color-fg-dim)]">{side === "source" && rows.destOnly ? "destination only" : "no rows"}</td></tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ScrollTable({
+  side,
+  rows,
+  columns,
+  cols,
+  now,
+  freshMs,
+}: {
+  side: "source" | "dest";
+  rows: TableRows | null;
+  columns: string[];
+  cols: string[];
+  now: number;
+  freshMs: number;
+}) {
+  const list = rows?.[side] ?? [];
+  const sticky = (i: number, fresh: boolean) =>
+    i === 0 ? `sticky left-0 z-[1] ${fresh ? "bg-[var(--color-surface-elev)]" : "bg-[var(--color-surface)]"} shadow-[1px_0_0_var(--color-border)]` : "";
+  return (
+    <div className="min-w-0 overflow-x-auto">
+      <table className="w-max min-w-full border-collapse font-mono text-[11px]">
+        <thead>
+          <tr className="text-left text-[var(--color-fg-dim)]">
+            {cols.map((c, i) => (
+              <th key={c} className={`whitespace-nowrap px-2 py-1 font-normal ${sticky(i, false)}`} title={c}>
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((r, i) => {
+            const applied = side === "dest" ? r.__bartie_updated_at : undefined;
+            const fresh = applied ? now - new Date(applied).getTime() < freshMs : false;
+            return (
+              <tr key={`${String(r[rows!.pk])}-${i}`} className={`border-t border-[var(--color-border)] ${fresh ? "bg-[var(--color-accent-soft)]" : ""}`}>
+                {columns.map((c, ci) => (
+                  <td key={c} className={`max-w-[48rem] whitespace-nowrap px-2 py-1 align-top ${ci === 0 ? sticky(0, fresh) : ""}`} title={String(r[c] ?? "")}>
+                    {cell(r[c])}
+                  </td>
+                ))}
+                {side === "dest" ? <td className="whitespace-nowrap px-2 py-1 align-top text-[var(--color-fg-dim)]">{applied ? ago(applied, now) : "—"}</td> : null}
               </tr>
             );
           })}

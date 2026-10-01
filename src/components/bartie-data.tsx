@@ -95,15 +95,15 @@ export function BartieData() {
 
       <div className="mt-4 grid gap-6 lg:grid-cols-2">
         <Pane title="source · terra" sub={`${count(rows?.counts?.source)} rows${rows?.destOnly ? " (this table exists only downstream)" : ""}`}>
-          <SideTable side="source" rows={rows} plan={plan} now={now} freshMs={10000} />
+          <SideTable side="source" rows={rows} plan={plan} now={now} freshMs={10000} layout="scroll" />
         </Pane>
         <Pane title="destination · warehouse" sub={`${count(rows?.counts?.dest)} rows${mismatch ? " · counts differ (events in flight, or run verify)" : ""}`} warn={!!mismatch}>
-          <SideTable side="dest" rows={rows} plan={plan} now={now} freshMs={10000} />
+          <SideTable side="dest" rows={rows} plan={plan} now={now} freshMs={10000} layout="scroll" />
         </Pane>
       </div>
 
       <p className="mt-6 text-xs text-[var(--color-fg-dim)]">
-        Highlighted destination rows were applied in the last ten seconds. The <code className="font-mono">bartie_vectors</code> table is the second destination: one embedded document per animal and observation, which is what the Ask panel on the{" "}
+        Tables scroll sideways; the id column stays put. Highlighted destination rows were applied in the last ten seconds. The <code className="font-mono">bartie_vectors</code> table is the second destination: one embedded document per animal and observation, which is what the Ask panel on the{" "}
         <Link href="/bartie/live" className="content-link">live page</Link> searches. Its embedding column is left out of the view.
       </p>
     </div>
