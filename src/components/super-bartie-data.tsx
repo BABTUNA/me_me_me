@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { bartieApiUrl } from "@/lib/bartie";
+import { superBartieApiUrl } from "@/lib/super-bartie";
 import { planColumns, SideTable, type TableRows } from "@/components/data-table";
 
 // The whole of both databases, one table at a time, side by side. Pages
@@ -20,7 +20,7 @@ type Order = "recent" | "pk";
 const PAGE = 50;
 
 async function api<T>(path: string): Promise<T> {
-  const res = await fetch(`${bartieApiUrl}${path}`);
+  const res = await fetch(`${superBartieApiUrl}${path}`);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
   return body as T;
@@ -33,7 +33,7 @@ const BTN = "min-h-7 rounded-sm px-2.5 py-1 font-mono text-xs transition-colors 
 const PAGER =
   "min-w-9 border border-[var(--color-border)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-fg)] disabled:hover:border-[var(--color-border)] disabled:hover:text-inherit";
 
-export function BartieData() {
+export function SuperBartieData() {
   const [table, setTable] = useState<Table>(TABLES[0]);
   const [order, setOrder] = useState<Order>("recent");
   const [offset, setOffset] = useState(0);
@@ -130,7 +130,7 @@ export function BartieData() {
 
       <p className="mt-6 text-xs text-[var(--color-fg-dim)]">
         Tables scroll sideways; the id column stays put. Highlighted destination rows were applied in the last ten seconds. The <code className="font-mono">bartie_vectors</code> table is the second destination: one embedded document per animal and observation, which is what the Ask panel on the{" "}
-        <Link href="/bartie/live" className="content-link">live page</Link> searches. Its embedding column is left out of the view.
+        <Link href="/super-bartie/live" className="content-link">live page</Link> searches. Its embedding column is left out of the view.
       </p>
     </div>
   );

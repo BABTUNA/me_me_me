@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { bartieApiUrl } from "@/lib/bartie";
+import { superBartieApiUrl } from "@/lib/super-bartie";
 import { ago, planColumns, SideTable, type TableRows } from "@/components/data-table";
 
-// A window onto a running Bartie pipeline. Three beats: watch the numbers,
+// A window onto a running Super Bartie pipeline. Three beats: watch the numbers,
 // change a row on the source and watch it land, ask the replicated data a
 // question in live and batch mode. Everything here is a plain fetch against
 // the control api; nothing is simulated.
@@ -49,7 +49,7 @@ type Verify = {
 };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${bartieApiUrl}${path}`, {
+  const res = await fetch(`${superBartieApiUrl}${path}`, {
     ...init,
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
   });
@@ -73,7 +73,7 @@ function kb(n: number | null): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export function BartieLive() {
+export function SuperBartieLive() {
   const [usage, setUsage] = useState<Usage | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [offline, setOffline] = useState(false);
@@ -148,7 +148,7 @@ function Header({ status, offline, backfilling }: { status?: string; offline: bo
         <span>terra → warehouse</span>
         <span className="text-[var(--color-fg-dim)]" role="status">{label}</span>
       </div>
-      <span className="num">live · {bartieApiUrl.replace(/^https?:\/\//, "")}</span>
+      <span className="num">live · {superBartieApiUrl.replace(/^https?:\/\//, "")}</span>
       {offline ? (
         <p className="w-full text-xs text-[var(--color-fg-muted)]">
           The demo box is not answering right now. It resets nightly and runs on one small VM; the rest of the post still stands.
@@ -235,7 +235,7 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
       <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[11px] text-[var(--color-fg-dim)]">
         <span>
           newest rows by {rows?.recency ?? "recency"} on each side. A ranger-log writer adds a sighting every couple of seconds; highlighted rows landed in the last few seconds.{" "}
-          <Link href="/bartie/data" className="underline underline-offset-2 hover:text-[var(--color-fg)]">browse both databases</Link>
+          <Link href="/super-bartie/data" className="underline underline-offset-2 hover:text-[var(--color-fg)]">browse both databases</Link>
         </span>
         <button
           type="button"

@@ -1,27 +1,27 @@
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
-import { BartieLive } from "@/components/bartie-live";
-import { bartieRepoUrl } from "@/lib/bartie";
+import { SuperBartieLive } from "@/components/super-bartie-live";
+import { superBartieRepoUrl } from "@/lib/super-bartie";
 
 export const metadata = {
-  title: "Bartie, live",
+  title: "Super Bartie, live",
   description:
     "A running Postgres CDC pipeline you can poke: change a row, watch it land, ask the replicated data a question.",
 };
 
-export default function BartieLivePage() {
+export default function SuperBartieLivePage() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-20">
-      <Link href="/blog/bartie-postgres-cdc" className="arrow-link text-xs text-[var(--color-fg-muted)] [&>svg]:rotate-180">
+      <Link href="/blog/super-bartie" className="arrow-link text-xs text-[var(--color-fg-muted)] [&>svg]:rotate-180">
         <Arrow /> the writeup
       </Link>
-      <h1 className="mt-10 text-4xl font-medium leading-tight tracking-tight sm:text-5xl">Bartie, live</h1>
+      <h1 className="mt-10 text-4xl font-medium leading-tight tracking-tight sm:text-5xl">Super Bartie, live</h1>
       <p className="mt-4 text-lg text-[var(--color-fg-muted)]">
         A Postgres CDC pipeline running on one small VM: source WAL to Redpanda to a destination Postgres, plus a
         pgvector copy for retrieval. Everything below hits the real thing.
       </p>
 
-      <BartieLive />
+      <SuperBartieLive />
 
       <div className="space-y-3 text-sm text-[var(--color-fg-muted)]">
         <p>
@@ -39,7 +39,7 @@ export default function BartieLivePage() {
         <p>
           The demo row is fenced to one primary key range and reset nightly. Code, deploy files, and the MCP server
           that exposes these same endpoints to Claude Code are in the{" "}
-          <a href={bartieRepoUrl} className="content-link" target="_blank" rel="noopener noreferrer">
+          <a href={superBartieRepoUrl} className="content-link" target="_blank" rel="noopener noreferrer">
             repo
           </a>
           .

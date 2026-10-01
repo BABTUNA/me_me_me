@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { Arrow } from "@/components/arrow";
-import { BartieData } from "@/components/bartie-data";
+import { SuperBartieData } from "@/components/super-bartie-data";
 
 export const metadata = {
-  title: "Bartie, the data",
+  title: "Super Bartie, the data",
   description: "Browse the source and destination databases of a running Postgres CDC pipeline, side by side.",
 };
 
-export default function BartieDataPage() {
+export default function SuperBartieDataPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-20">
-      <Link href="/bartie/live" className="arrow-link text-xs text-[var(--color-fg-muted)] [&>svg]:rotate-180">
+      <Link href="/super-bartie/live" className="arrow-link text-xs text-[var(--color-fg-muted)] [&>svg]:rotate-180">
         <Arrow /> the live console
       </Link>
       <h1 className="mt-10 text-4xl font-medium leading-tight tracking-tight sm:text-5xl">Both databases</h1>
@@ -19,7 +19,7 @@ export default function BartieDataPage() {
         the write-ahead log. Same table, same page, so you can read across.
       </p>
       <div className="mt-10">
-        <BartieData />
+        <SuperBartieData />
       </div>
     </div>
   );
