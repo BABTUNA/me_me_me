@@ -43,8 +43,4 @@ I also added two tools they do not have. `pipeline_verify` compares checksums of
 
 Everything runs with Docker Compose on one VM: the source Postgres, Redpanda, the destination Postgres with pgvector, and the Go binaries. Caddy handles TLS. A cron job resets the data every night, which also means the backfill runs from scratch once a day.
 
-## What is missing
-
-It runs one pipeline and has one API token. It still does not handle schema changes, same as Bartie. The vector table only covers two of the source tables. The MCP server only runs locally.
-
 The code is on GitHub: **[Super Bartie](https://github.com/BABTUNA/SuperBartie)**, and the engine it is built on, **[Bartie](https://github.com/BABTUNA/Bartie)**.
