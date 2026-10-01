@@ -1,44 +1,50 @@
 ---
-title: "Super Bartie: running a CDC engine as a service"
+title: "Super Bartie: what I built around my CDC engine"
 date: "2026-10-01"
-summary: "The Bartie engine, unchanged, with a control API that says where the lag is, a pgvector destination for live retrieval, an MCP server, and a deployment you can poke."
+summary: "A follow-up to Bartie. I added an API for checking on the pipeline, a second destination that stores vectors, an MCP server, and a deployment."
 category: technical
 authorship: hybrid
 tags: ["bartie", "go", "postgres", "cdc", "pgvector", "mcp", "kafka"]
 ---
 
-[Bartie](/blog/bartie-postgres-cdc) is a small Postgres CDC engine I built to understand how systems like [Artie](https://artie.com) work, and it was something you ran from a terminal. **[Super Bartie](https://github.com/BABTUNA/SuperBartie)** is the same engine, unchanged, running as a service: an API that reports what the pipeline is doing, a second destination that turns each change into a vector, an MCP server so an agent can operate it, and a deployment with a page in front.
+[Super Bartie](https://github.com/BABTUNA/SuperBartie) is a follow-up to [Bartie](/blog/bartie-postgres-cdc), the small Postgres CDC engine I built to understand how [Artie](https://artie.com) works. Bartie ran from a terminal. For this version I left the reader and writer alone and built the parts around them: an API for checking on the pipeline, a second destination that stores vectors, an MCP server, and a deployment I can link to.
 
 ## Try it
 
-**[Open the live console](/super-bartie/live)** to watch rows land, move a sighting on the source and see it arrive, and ask the same question of a live copy and a stale one. You can also [browse both databases side by side](/super-bartie/data).
+The pipeline is running at **[/super-bartie/live](/super-bartie/live)**. You can watch rows get replicated, change a row yourself, and ask questions about the data. There is also a [page that shows both databases](/super-bartie/data) next to each other.
 
-## Where the lag is
+## What I added
 
-Most pipelines tell you how far behind they are. The [control API](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-6-control-api.md) also says where, with three numbers next to the usual per-table latency:
+### 1. An API that shows where the lag is
 
-- **Reader lag**: the source WAL ahead of what the reader has acknowledged.
-- **Backlog**: messages the broker holds that the writer has not committed.
-- **Merge time**: how long the writer's `MERGE` transactions take.
+With Bartie, the only way to see what was happening was to read logs. I added an [HTTP API](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-6-control-api.md) that reports status, errors, and latency. Latency alone did not tell me which part was slow, so it also returns three more numbers:
 
-Whichever one grows names the bottleneck: the reader, the writer, or the destination.
+| Number | What it measures | If it grows |
+| --- | --- | --- |
+| Reader lag | How far the source WAL is ahead of the reader | The reader or the source is slow |
+| Backlog | Messages in Redpanda the writer has not applied yet | The writer is behind |
+| Merge time | How long each `MERGE` takes on the destination | The destination is slow |
 
-## A second destination
+I copied the URL layout from Artie's public API. Their usage endpoint returns latency per table, and mine adds these three fields.
 
-A model reading a nightly copy of your data will confidently tell you yesterday. To show it, a [second consumer](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-7-vector-destination.md) reads the same Redpanda topic, turns each changed row into a sentence, embeds it, and upserts it into pgvector. It commits offsets only after the vector transaction commits, the same rule the writer follows.
+### 2. A second destination for vectors
 
-The console asks one question of two copies: the live vector table, a couple of seconds behind the source, and a snapshot of it refreshed every five minutes. Move a sighting, ask again, and they disagree.
+Artie has [written about](https://www.artie.com/blogs/ai-data-integration) why AI systems need fresh data, and I wanted to see it for myself. I added a [second consumer](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-7-vector-destination.md) that reads the same Redpanda topic as the writer. For each changed row it builds a sentence, embeds it, and stores it in pgvector.
 
-## An agent interface from the contract
+The demo keeps two copies: the live table, which is about two seconds behind the source, and a snapshot that refreshes every five minutes. If you change a row and ask the same question against both, only the live copy has the new answer.
 
-Artie's MCP server generates its tools from an API contract. Super Bartie's [MCP server](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-8-mcp.md) does the same from one OpenAPI file, with Artie's tool names wherever an equivalent exists. Two tools have none: `pipeline_verify` checksums every table on both databases, and `destination_ask` queries the vector copy. Ask Claude Code "why is my pipeline slow?" and it names a component, not just a number.
+### 3. An MCP server
 
-## One box
+Artie recently shipped an [MCP server](https://github.com/artie-labs/artie-mcp). Reading the repo, I saw that it generates its tools from an OpenAPI spec instead of defining them by hand. I did [the same](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-8-mcp.md) with a spec for my API and used their tool names where the endpoints matched.
 
-Everything runs in Docker Compose on a single VM behind Caddy: source Postgres, Redpanda, destination Postgres with pgvector, and the four Go binaries from one image. A nightly job drops every volume and brings the stack back up, which wipes the demo data and also exercises the fresh-slot backfill path every night.
+I also added two tools they do not have. `pipeline_verify` compares checksums of every table in both databases, and `destination_ask` searches the vector table.
 
-## Where it stops
+## Running it
 
-One pipeline, one tenant, one bearer token. No schema evolution, the same limit as Bartie. The vector destination embeds two tables and does not rewrite a document when a row it was enriched from changes. The MCP server is local over stdio, with no hosted endpoint.
+Everything runs with Docker Compose on one VM: the source Postgres, Redpanda, the destination Postgres with pgvector, and the Go binaries. Caddy handles TLS. A cron job resets the data every night, which also means the backfill runs from scratch once a day.
 
-**[Super Bartie on GitHub](https://github.com/BABTUNA/SuperBartie)**, and the engine it runs: **[Bartie](https://github.com/BABTUNA/Bartie)**.
+## What is missing
+
+It runs one pipeline and has one API token. It still does not handle schema changes, same as Bartie. The vector table only covers two of the source tables. The MCP server only runs locally.
+
+The code is on GitHub: **[Super Bartie](https://github.com/BABTUNA/SuperBartie)**, and the engine it is built on, **[Bartie](https://github.com/BABTUNA/Bartie)**.

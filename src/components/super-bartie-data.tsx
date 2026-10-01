@@ -114,7 +114,7 @@ export function SuperBartieData() {
 
       {err ? (
         <p role="status" className="mt-4 text-xs text-[var(--color-fg-muted)]">
-          The demo box is not answering ({err}). It runs on one small VM and resets nightly.
+          The demo server is not responding ({err}). It runs on one small VM and resets every night.
           {rows ? " Showing the last page it sent." : ""}
         </p>
       ) : null}
@@ -123,14 +123,14 @@ export function SuperBartieData() {
         <Pane title="source · terra" sub={`${count(rows?.counts?.source)} rows${rows?.destOnly ? " (this table exists only downstream)" : ""}`}>
           {body("source")}
         </Pane>
-        <Pane title="destination · warehouse" sub={`${count(rows?.counts?.dest)} rows${mismatch ? " · counts differ (events in flight, or run verify)" : ""}`} warn={!!mismatch}>
+        <Pane title="destination · warehouse" sub={`${count(rows?.counts?.dest)} rows${mismatch ? " · counts differ, a change may still be on its way" : ""}`} warn={!!mismatch}>
           {body("dest")}
         </Pane>
       </div>
 
       <p className="mt-6 text-xs text-[var(--color-fg-dim)]">
-        Tables scroll sideways; the id column stays put. Highlighted destination rows were applied in the last ten seconds. The <code className="font-mono">bartie_vectors</code> table is the second destination: one embedded document per animal and observation, which is what the Ask panel on the{" "}
-        <Link href="/super-bartie/live" className="content-link">live page</Link> searches. Its embedding column is left out of the view.
+        Tables scroll sideways and the id column stays in place. Highlighted rows on the destination were applied in the last ten seconds. The <code className="font-mono">bartie_vectors</code> table holds one sentence per animal and observation, which is what step 3 on the{" "}
+        <Link href="/super-bartie/live" className="content-link">live page</Link> searches. Its embedding column is hidden because it is 1536 numbers per row.
       </p>
     </div>
   );

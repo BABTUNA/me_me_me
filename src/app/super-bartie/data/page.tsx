@@ -15,8 +15,8 @@ export default function SuperBartieDataPage() {
       </Link>
       <h1 className="mt-10 text-4xl font-medium leading-tight tracking-tight sm:text-5xl">Both databases</h1>
       <p className="mt-4 max-w-2xl text-lg text-[var(--color-fg-muted)]">
-        The source on the left is what gets written to. The destination on the right is what Bartie keeps in sync from
-        the write-ahead log. Same table, same page, so you can read across.
+        The source is on the left and the destination is on the right. Bartie copies changes from the source&apos;s
+        write-ahead log into the destination. Both sides show the same table and the same page of rows.
       </p>
       <div className="mt-10">
         <SuperBartieData />

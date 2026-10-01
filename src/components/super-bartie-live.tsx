@@ -175,7 +175,7 @@ function Header({ status, offline, backfilling }: { status?: string; offline: bo
       <span className="num">live · {superBartieApiUrl.replace(/^https?:\/\//, "")}</span>
       {offline ? (
         <p className="w-full text-xs text-[var(--color-fg-muted)]">
-          The demo box is not answering right now. It resets nightly and runs on one small VM; the rest of the post still stands.
+          The demo server is not responding right now. It runs on one small VM and resets every night.
         </p>
       ) : null}
     </div>
@@ -268,7 +268,7 @@ function TablePanel({ disabled, now, picked, onPick }: { disabled: boolean; now:
       </div>
       <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[11px] text-[var(--color-fg-dim)]">
         <span>
-          newest rows by {rows?.recency ?? "recency"} on each side. A ranger-log writer adds a sighting every couple of seconds; highlighted rows landed in the last few seconds. Click a sighting to edit it in step 2.{" "}
+          Newest rows on each side. A script adds a sighting every two seconds. Highlighted rows arrived in the last few seconds. Click a sighting to edit it in step 2.{" "}
           <Link href="/super-bartie/data" className="underline underline-offset-2 hover:text-[var(--color-fg)]">browse both databases</Link>
         </span>
         <button
@@ -494,8 +494,8 @@ function Ask({ disabled, now }: { disabled: boolean; now: number }) {
       </div>
       {err ? <p className={`mt-2 text-xs ${ERR_TEXT}`} role="alert">{err}</p> : null}
       <div className="mt-4 grid gap-px bg-[var(--color-border)] sm:grid-cols-2">
-        <AnswerCard title="live copy" sub="vector table the pipeline keeps seconds behind the source" a={live} now={now} />
-        <AnswerCard title="batch copy" sub="snapshot refreshed every 5 minutes, standing in for nightly ETL" a={batch} now={now} />
+        <AnswerCard title="live copy" sub="updated by the pipeline, about two seconds behind the source" a={live} now={now} />
+        <AnswerCard title="batch copy" sub="a snapshot taken every five minutes" a={batch} now={now} />
       </div>
       {live ? (
         <p className="mt-2 text-[11px] text-[var(--color-fg-dim)]">
@@ -556,7 +556,7 @@ function VerifyRow({ disabled }: { disabled: boolean }) {
           {res.tables.map((t) => `${t.table.replace("public.", "")} ${t.sourceRows.toLocaleString()}/${t.destRows.toLocaleString()}`).join(" · ")}
         </span>
       ) : (
-        <span className="min-w-0 text-xs text-[var(--color-fg-dim)]">row counts and a full-content checksum of every table, source vs destination</span>
+        <span className="min-w-0 text-xs text-[var(--color-fg-dim)]">compares row counts and a checksum of every table in both databases</span>
       )}
     </section>
   );
