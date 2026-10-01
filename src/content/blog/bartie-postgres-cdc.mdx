@@ -36,7 +36,7 @@ Redpanda sits between them as a Kafka-compatible buffer. A separate command, `cd
 
 [Open the full-size architecture diagram](/blog/bartie-architecture.png)
 
-Every change uses the same [event envelope](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/internal/events/event.go): an operation, table name, primary key, row values, source column types, and replication metadata. Snapshot rows use the operation `r`, for “read,” and follow the same apply path as inserts and updates.
+Every change uses the same [event envelope](https://github.com/BABTUNA/Bartie/blob/d8da47c5f6ecfdf51f1ae7ec7cf99e9bb88ba993/internal/events/event.go): an operation, table name, primary key, row values, source column types, and replication metadata. Snapshot rows use the operation `r`, for “read,” and follow the same apply path as inserts and updates.
 
 The Kafka message key combines the table and primary key. Changes to the same row therefore go to the same partition, preserving the ordering the writer needs when it collapses a batch to final row states.
 
