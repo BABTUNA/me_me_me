@@ -39,7 +39,7 @@ A [second consumer](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-
 
 The console asks one question of two copies. The live copy is the vector table, a couple of seconds behind the source. The batch copy is a snapshot of that table refreshed every five minutes, which is generous to batch. Edit the demo row, ask again, and they disagree.
 
-Two details mattered. An update that leaves a TOASTed `notes` column untouched arrives without the text, so there is nothing to re-embed and the row is skipped. And the default embedder is a deterministic keyword hash, so the whole stack runs with no API keys; a real embedding model is one environment variable.
+Two details mattered. An update that leaves a TOASTed `notes` column untouched arrives without the text, so there is nothing to re-embed and the row is skipped. And the default embedder is a deterministic keyword hash, so the whole stack runs with no API keys. A real embedding model is one environment variable.
 
 ## An agent interface from the contract
 
