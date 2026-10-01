@@ -1,7 +1,7 @@
 ---
 title: "Building Bartie: a small Postgres CDC engine"
 date: "2026-09-10"
-summary: "Postgres WAL to Kafka to a second database. How Bartie handles acknowledgments, replay, snapshot backfill, and unchanged values."
+summary: "Postgres WAL to Kafka to a second database. How Bartie handles acknowledgments, replay, and snapshot backfill."
 category: technical
 authorship: hybrid
 tags: ["bartie", "go", "postgres", "cdc", "distributed systems", "kafka"]
@@ -65,13 +65,11 @@ Kafka offsets advance after all the table flushes succeed. If a crash happens pa
 
 Bartie commits each destination table separately. If a source transaction changes several tables, readers may see some of those changes before the rest arrive.
 
-> **Side note on TOAST:** Postgres can mark large values as unchanged. Bartie's [merge path](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/internal/writer/flush.go) preserves them rather than writing `NULL`.
-
 ## Backfill needs a precise starting point
 
 Bartie creates a replication slot with an exported snapshot, copies existing rows from that snapshot, then streams the changes retained in the WAL. This gives the initial copy and live stream a shared starting point, so writes during backfill are still captured. Snapshot rows use the same event format and apply path as live changes.
 
-The current [backfill design](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/docs/phase-4-backfill.md) **cannot resume after a mid-backfill crash**. Long backfills also retain WAL on the source, making disk usage a concern.
+Two limits follow from this [design](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/docs/phase-4-backfill.md). The exported snapshot lives only as long as the connection that created it, so a crash mid-backfill means starting over. And the slot holds WAL on the source from the moment it's created, so a long backfill on a busy database grows the source's disk until streaming catches up.
 
 ## Checking the copy after a crash
 
