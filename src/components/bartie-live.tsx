@@ -58,6 +58,14 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+// Status colours. The 500 shades read fine on the dark surface but fall under
+// 4.5:1 on the light one at 12px, so each gets a darker light-theme shade.
+const OK_TEXT = "text-emerald-700 [[data-theme=dark]_&]:text-emerald-400";
+const WARN_TEXT = "text-amber-700 [[data-theme=dark]_&]:text-amber-400";
+const ERR_TEXT = "text-red-600 [[data-theme=dark]_&]:text-red-400";
+const FIELD =
+  "rounded-sm border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 font-mono text-xs outline-none focus:border-[var(--color-accent)] focus-visible:ring-1 focus-visible:ring-[var(--color-accent)] disabled:opacity-50";
+
 function kb(n: number | null): string {
   if (n === null) return "—";
   if (n < 1024) return `${n} B`;
@@ -107,16 +115,19 @@ export function BartieLive() {
     const total = rows.reduce((a, t) => a + t.count, 0);
     return rows.reduce((a, t) => a + (t.latency as number) * t.count, 0) / total;
   })();
+  // Before the first poll lands the tiles show "…", not "—", so an empty
+  // metric and a not-yet-fetched one do not look the same.
+  const pending = usage === null && !offline;
 
   return (
     <div className="my-8 rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] text-sm">
       <Header status={summary?.status} offline={offline} backfilling={summary?.hasBackfillingTables} />
 
       <div className="grid grid-cols-2 gap-px border-b border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-4">
-        <Stat label="latency" value={avgLatency === null ? "—" : `${avgLatency.toFixed(2)}s`} hint="source commit → destination apply, last hour" />
-        <Stat label="reader lag" value={kb(usage?.readerLagBytes ?? null)} hint="source WAL ahead of the reader" />
-        <Stat label="backlog" value={usage?.backlogMessages === null || usage?.backlogMessages === undefined ? "—" : `${usage.backlogMessages} msgs`} hint="published, not yet applied" />
-        <Stat label="merge p95" value={usage?.mergeMs && usage.mergeMs.samples > 0 ? `${usage.mergeMs.p95.toFixed(0)} ms` : "—"} hint="destination MERGE time" />
+        <Stat label="latency" value={pending ? "…" : avgLatency === null ? "—" : `${avgLatency.toFixed(2)}s`} hint="source commit → destination apply, last hour" />
+        <Stat label="reader lag" value={pending ? "…" : kb(usage?.readerLagBytes ?? null)} hint="source WAL ahead of the reader" />
+        <Stat label="backlog" value={pending ? "…" : usage?.backlogMessages === null || usage?.backlogMessages === undefined ? "—" : `${usage.backlogMessages.toLocaleString()} msgs`} hint="published, not yet applied" />
+        <Stat label="merge p95" value={pending ? "…" : usage?.mergeMs && usage.mergeMs.samples > 0 ? `${usage.mergeMs.p95.toFixed(0)} ms` : "—"} hint="destination MERGE time" />
       </div>
 
       <TablePanel disabled={offline} now={now} />
@@ -133,9 +144,9 @@ function Header({ status, offline, backfilling }: { status?: string; offline: bo
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] px-4 py-3">
       <div className="flex items-center gap-2 font-mono text-xs">
-        <span className={`inline-block h-2 w-2 ${dot}`} />
+        <span className={`inline-block h-2 w-2 shrink-0 ${dot}`} aria-hidden="true" />
         <span>terra → warehouse</span>
-        <span className="text-[var(--color-fg-dim)]">{label}</span>
+        <span className="text-[var(--color-fg-dim)]" role="status">{label}</span>
       </div>
       <span className="num">live · {bartieApiUrl.replace(/^https?:\/\//, "")}</span>
       {offline ? (
@@ -204,23 +215,24 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
 
   return (
     <section className="border-b border-[var(--color-border)] px-4 py-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-2">
         <h3 className="font-medium">1. Watch rows land</h3>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-2" aria-label="table">
           {TABLES.map((t) => (
             <button
               key={t}
               type="button"
+              aria-pressed={t === table}
               disabled={disabled}
               onClick={() => setTable(t)}
-              className={`rounded-sm px-2 py-0.5 font-mono text-[11px] ${t === table ? "bg-[var(--color-fg)] text-[var(--color-bg)]" : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"}`}
+              className={`rounded-sm px-2 py-1 font-mono text-[11px] transition-colors disabled:opacity-50 ${t === table ? "bg-[var(--color-fg)] text-[var(--color-bg)]" : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"}`}
             >
               {t.replace("public.", "")}
             </button>
           ))}
         </div>
       </div>
-      <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[11px] text-[var(--color-fg-dim)]">
+      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[11px] text-[var(--color-fg-dim)]">
         <span>
           newest rows by {rows?.recency ?? "recency"} on each side. A ranger-log writer adds a sighting every couple of seconds; highlighted rows landed in the last few seconds.{" "}
           <Link href="/bartie/data" className="underline underline-offset-2 hover:text-[var(--color-fg)]">browse both databases</Link>
@@ -229,20 +241,32 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
           type="button"
           onClick={toggleTraffic}
           disabled={disabled || traffic === null}
-          className="inline-flex items-center gap-1.5 rounded-sm border border-[var(--color-border-strong)] px-2 py-0.5 font-mono text-[11px] text-[var(--color-fg)] hover:border-[var(--color-fg)] disabled:opacity-50"
+          aria-pressed={traffic === true}
+          className="inline-flex items-center gap-1.5 rounded-sm border border-[var(--color-border-strong)] px-2 py-1 font-mono text-[11px] text-[var(--color-fg)] transition-colors hover:border-[var(--color-fg)] disabled:cursor-not-allowed disabled:opacity-50"
           title="pause or resume the demo writer"
         >
-          <span className={`inline-block h-1.5 w-1.5 ${traffic ? "bg-emerald-500" : "bg-[var(--color-fg-dim)]"}`} />
+          <span className={`inline-block h-1.5 w-1.5 ${traffic ? "bg-emerald-500" : "bg-[var(--color-fg-dim)]"}`} aria-hidden="true" />
           traffic {traffic === null ? "…" : traffic ? "on" : "off"}
         </button>
-        {trafficErr ? <span className="text-amber-500">{trafficErr}</span> : null}
+        {trafficErr ? <span className={WARN_TEXT}>{trafficErr}</span> : null}
       </p>
       <div className="mt-3 grid min-w-0 gap-px bg-[var(--color-border)]">
-        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">source (terra)</div><SideTable side="source" rows={rows} plan={plan} now={now} layout="scroll" /></div>
-        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">destination (warehouse)</div><SideTable side="dest" rows={rows} plan={plan} now={now} layout="scroll" /></div>
+        <div className="min-w-0 bg-[var(--color-surface)] py-2">
+          <div className="num px-2 pb-1">source (terra)</div>
+          {rows ? <SideTable side="source" rows={rows} plan={plan} now={now} layout="scroll" /> : <Placeholder disabled={disabled} />}
+        </div>
+        <div className="min-w-0 bg-[var(--color-surface)] py-2">
+          <div className="num px-2 pb-1">destination (warehouse)</div>
+          {rows ? <SideTable side="dest" rows={rows} plan={plan} now={now} layout="scroll" /> : <Placeholder disabled={disabled} />}
+        </div>
       </div>
     </section>
   );
+}
+
+// Stands in for a table until the first fetch lands (or while the api is down).
+function Placeholder({ disabled }: { disabled: boolean }) {
+  return <div className="px-2 py-2 font-mono text-[11px] text-[var(--color-fg-dim)]">{disabled ? "unreachable" : "loading…"}</div>;
 }
 
 // --- beat 1: change a row, watch it land ------------------------------------
@@ -293,7 +317,7 @@ function Poke({ disabled, now, onPoked }: { disabled: boolean; now: number; onPo
 
   return (
     <section className="border-b border-[var(--color-border)] px-4 py-4">
-      <div className="flex items-baseline justify-between">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h3 className="font-medium">2. Change a row on the source</h3>
         <span className="num">observations #{DEMO_PK}</span>
       </div>
@@ -303,9 +327,10 @@ function Poke({ disabled, now, onPoked }: { disabled: boolean; now: number; onPo
         maxLength={500}
         rows={2}
         disabled={disabled}
-        className="mt-3 w-full resize-none rounded-sm border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 font-mono text-xs outline-none focus:border-[var(--color-accent)]"
+        aria-label="notes for the demo row"
+        className={`mt-3 w-full resize-none ${FIELD}`}
       />
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <Btn onClick={() => poke(row?.source ? "u" : "c")} disabled={disabled || busy}>
           {row?.source ? "Update" : "Insert"}
         </Btn>
@@ -314,25 +339,28 @@ function Poke({ disabled, now, onPoked }: { disabled: boolean; now: number; onPo
         </Btn>
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setNotes(notes.includes("SOUTH") ? notes.replace("SOUTH bank near the reeds", "NORTH ridge above the water") : DEFAULT_NOTES)}
-          className="num underline-offset-4 hover:underline"
+          className="num rounded-sm px-1 py-1.5 underline-offset-4 hover:underline disabled:opacity-50"
         >
           swap south/north
         </button>
-        {err ? <span className="text-xs text-red-500">{err}</span> : null}
+        {err ? <span className={`text-xs ${ERR_TEXT}`} role="alert">{err}</span> : null}
       </div>
 
       <div className="mt-4 grid gap-px bg-[var(--color-border)] sm:grid-cols-2">
-        <Side title="source (terra)" notes={srcNotes} meta={row?.source ? "committed" : "no row"} />
+        <Side title="source (terra)" notes={srcNotes} meta={row === null ? (disabled ? "unreachable" : "loading…") : row.source ? "committed" : "no row"} />
         <Side
           title="destination (warehouse)"
           notes={dstNotes}
           meta={
-            row?.dest
-              ? `applied ${ago(applied, now)}${tookMs !== null ? ` · ${tookMs} ms after commit` : ""}`
-              : row?.source
-                ? "in flight…"
-                : "no row"
+            row === null
+              ? disabled ? "unreachable" : "loading…"
+              : row.dest
+                ? `applied ${ago(applied, now)}${tookMs !== null ? ` · ${tookMs.toLocaleString()} ms after commit` : ""}`
+                : row.source
+                  ? "in flight…"
+                  : "no row"
           }
           highlight={row !== null && !landed}
         />
@@ -379,7 +407,7 @@ function Ask({ disabled, now }: { disabled: boolean; now: number }) {
 
   return (
     <section className="border-b border-[var(--color-border)] px-4 py-4">
-      <div className="flex items-baseline justify-between">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h3 className="font-medium">3. Ask the replicated data</h3>
         <span className="num">pgvector · same question twice</span>
       </div>
@@ -389,19 +417,20 @@ function Ask({ disabled, now }: { disabled: boolean; now: number }) {
           onChange={(e) => setQ(e.target.value)}
           maxLength={500}
           disabled={disabled}
-          onKeyDown={(e) => { if (e.key === "Enter") ask(); }}
-          className="min-w-0 flex-1 rounded-sm border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 font-mono text-xs outline-none focus:border-[var(--color-accent)]"
+          aria-label="question"
+          onKeyDown={(e) => { if (e.key === "Enter" && !busy && !disabled) ask(); }}
+          className={`min-w-0 flex-1 ${FIELD}`}
         />
-        <Btn onClick={ask} disabled={disabled || busy}>{busy ? "…" : "Ask"}</Btn>
+        <Btn onClick={ask} disabled={disabled || busy} busy={busy}>{busy ? "asking…" : "Ask"}</Btn>
       </div>
-      {err ? <p className="mt-2 text-xs text-red-500">{err}</p> : null}
+      {err ? <p className={`mt-2 text-xs ${ERR_TEXT}`} role="alert">{err}</p> : null}
       <div className="mt-4 grid gap-px bg-[var(--color-border)] sm:grid-cols-2">
         <AnswerCard title="live copy" sub="vector table the pipeline keeps seconds behind the source" a={live} now={now} />
         <AnswerCard title="batch copy" sub="snapshot refreshed every 5 minutes, standing in for nightly ETL" a={batch} now={now} />
       </div>
       {live ? (
         <p className="mt-2 text-[11px] text-[var(--color-fg-dim)]">
-          answered by {live.model} · retrieval + answer {live.latencyMs} ms
+          answered by {live.model} · retrieval + answer {live.latencyMs.toLocaleString()} ms
         </p>
       ) : null}
     </section>
@@ -449,27 +478,28 @@ function VerifyRow({ disabled }: { disabled: boolean }) {
   };
 
   return (
-    <section className="flex flex-wrap items-center gap-3 px-4 py-4">
+    <section className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-4">
       <h3 className="font-medium">4. Prove the copy is exact</h3>
-      <Btn onClick={run} disabled={disabled || busy} subtle>{busy ? "checksumming…" : "Verify"}</Btn>
+      <Btn onClick={run} disabled={disabled || busy} subtle busy={busy}>{busy ? "checksumming…" : "Verify"}</Btn>
       {res ? (
-        <span className={`font-mono text-xs ${res.match ? "text-emerald-500" : "text-amber-500"}`}>
+        <span className={`min-w-0 font-mono text-xs ${res.match ? OK_TEXT : WARN_TEXT}`} role="status">
           {res.match ? `all ${res.tables.length} tables MATCH` : "mismatch"} ·{" "}
-          {res.tables.map((t) => `${t.table.replace("public.", "")} ${t.sourceRows}/${t.destRows}`).join(" · ")}
+          {res.tables.map((t) => `${t.table.replace("public.", "")} ${t.sourceRows.toLocaleString()}/${t.destRows.toLocaleString()}`).join(" · ")}
         </span>
       ) : (
-        <span className="text-xs text-[var(--color-fg-dim)]">row counts and a full-content checksum of every table, source vs destination</span>
+        <span className="min-w-0 text-xs text-[var(--color-fg-dim)]">row counts and a full-content checksum of every table, source vs destination</span>
       )}
     </section>
   );
 }
 
-function Btn({ children, onClick, disabled, subtle }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; subtle?: boolean }) {
+function Btn({ children, onClick, disabled, subtle, busy }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; subtle?: boolean; busy?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
+      aria-busy={busy || undefined}
       className={`rounded-sm px-3 py-1.5 font-mono text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
         subtle
           ? "border border-[var(--color-border-strong)] hover:border-[var(--color-fg)]"
