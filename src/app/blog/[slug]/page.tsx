@@ -9,7 +9,6 @@ import { AuthorshipBadge } from "@/components/authorship-badge";
 import { ViewCounter } from "@/components/view-counter";
 import { getAllPosts, getPost } from "@/lib/posts";
 import { BlogImage, DriveEmbed, YouTube } from "@/components/mdx-media";
-import { SuperBartieLive } from "@/components/super-bartie-live";
 import { useMDXComponents } from "../../../../mdx-components";
 
 export function generateStaticParams() {
@@ -43,7 +42,6 @@ export default async function PostPage({
     BlogImage,
     YouTube,
     DriveEmbed,
-    SuperBartieLive,
   });
 
   return (

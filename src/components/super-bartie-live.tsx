@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { superBartieApiUrl } from "@/lib/super-bartie";
-import { ago, planColumns, SideTable, type TableRows } from "@/components/data-table";
+import { ago, planColumns, SideTable, type RowSelect, type TableRows } from "@/components/data-table";
 
 // A window onto a running Super Bartie pipeline. Three beats: watch the numbers,
 // change a row on the source and watch it land, ask the replicated data a
@@ -13,8 +13,30 @@ import { ago, planColumns, SideTable, type TableRows } from "@/components/data-t
 const PIPELINE = "bartie";
 const DEMO_TABLE = "public.observations";
 const DEMO_PK = 9001;
-const DEFAULT_NOTES =
-  "Mosi the wildebeest was spotted resting on the SOUTH bank near the reeds.";
+// the only values a visitor can write, the server holds the same list
+// free text is never sent, so nothing a visitor types ends up on the page
+const PLACES = [
+  "the north ridge",
+  "the south bank",
+  "the reed bed",
+  "the shallows",
+  "the acacia line",
+  "the dry channel",
+  "the salt lick",
+  "the far shore",
+] as const;
+const DEFAULT_PLACE = "the south bank";
+
+// ids the page may change: its own demo rows, and sightings the traffic writer made
+const DEMO_MIN = 9000;
+const DEMO_MAX = 9099;
+const TRAFFIC_MIN = 3_000_000_000;
+const isDemo = (id: number) => id >= DEMO_MIN && id <= DEMO_MAX;
+const isEditable = (id: number) => isDemo(id) || id >= TRAFFIC_MIN;
+
+// the place is the last clause of a ranger log, like ", the reed bed."
+const placeOf = (notes: string | null) => notes?.match(/,\s*([^,]*)\.\s*$/)?.[1] ?? null;
+
 const DEFAULT_QUESTION = "Where was Mosi last seen? (observation 9001)";
 
 type Usage = {
@@ -78,6 +100,8 @@ export function SuperBartieLive() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [offline, setOffline] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  // which observation step 2 edits, picked by clicking a row in step 1
+  const [picked, setPicked] = useState<number>(DEMO_PK);
 
   // Poll the numbers. Slow when nothing is happening, faster right after a poke.
   const fastUntil = useRef(0);
@@ -130,8 +154,8 @@ export function SuperBartieLive() {
         <Stat label="merge p95" value={pending ? "…" : usage?.mergeMs && usage.mergeMs.samples > 0 ? `${usage.mergeMs.p95.toFixed(0)} ms` : "—"} hint="destination MERGE time" />
       </div>
 
-      <TablePanel disabled={offline} now={now} />
-      <Poke disabled={offline} now={now} onPoked={() => { fastUntil.current = Date.now() + 15000; }} />
+      <TablePanel disabled={offline} now={now} picked={picked} onPick={setPicked} />
+      <Poke disabled={offline} now={now} pk={picked} onReset={() => setPicked(DEMO_PK)} onPoked={() => { fastUntil.current = Date.now() + 15000; }} />
       <Ask disabled={offline} now={now} />
       <VerifyRow disabled={offline} />
     </div>
@@ -171,7 +195,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint: stri
 
 const TABLES = ["public.observations", "public.animals", "public.watering_holes"] as const;
 
-function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
+function TablePanel({ disabled, now, picked, onPick }: { disabled: boolean; now: number; picked: number; onPick: (id: number) => void }) {
   const [table, setTable] = useState<(typeof TABLES)[number]>(TABLES[0]);
   const [rows, setRows] = useState<TableRows | null>(null);
   const [traffic, setTraffic] = useState<boolean | null>(null);
@@ -213,6 +237,16 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
 
   const plan = planColumns(rows);
 
+  // only observations can be edited, and only demo rows or traffic sightings
+  const select: RowSelect | undefined =
+    table === "public.observations"
+      ? {
+          canPick: (r) => isEditable(Number(r.observation_id)),
+          onPick: (r) => onPick(Number(r.observation_id)),
+          picked: String(picked),
+        }
+      : undefined;
+
   return (
     <section className="border-b border-[var(--color-border)] px-4 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-2">
@@ -234,7 +268,7 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
       </div>
       <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[11px] text-[var(--color-fg-dim)]">
         <span>
-          newest rows by {rows?.recency ?? "recency"} on each side. A ranger-log writer adds a sighting every couple of seconds; highlighted rows landed in the last few seconds.{" "}
+          newest rows by {rows?.recency ?? "recency"} on each side. A ranger-log writer adds a sighting every couple of seconds; highlighted rows landed in the last few seconds. Click a sighting to edit it in step 2.{" "}
           <Link href="/super-bartie/data" className="underline underline-offset-2 hover:text-[var(--color-fg)]">browse both databases</Link>
         </span>
         <button
@@ -253,11 +287,11 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
       <div className="mt-3 grid min-w-0 gap-px bg-[var(--color-border)]">
         <div className="min-w-0 bg-[var(--color-surface)] py-2">
           <div className="num px-2 pb-1">source (terra)</div>
-          {rows ? <SideTable side="source" rows={rows} plan={plan} now={now} layout="scroll" /> : <Placeholder disabled={disabled} />}
+          {rows ? <SideTable side="source" rows={rows} plan={plan} now={now} layout="scroll" select={select} /> : <Placeholder disabled={disabled} />}
         </div>
         <div className="min-w-0 bg-[var(--color-surface)] py-2">
           <div className="num px-2 pb-1">destination (warehouse)</div>
-          {rows ? <SideTable side="dest" rows={rows} plan={plan} now={now} layout="scroll" /> : <Placeholder disabled={disabled} />}
+          {rows ? <SideTable side="dest" rows={rows} plan={plan} now={now} layout="scroll" select={select} /> : <Placeholder disabled={disabled} />}
         </div>
       </div>
     </section>
@@ -271,8 +305,7 @@ function Placeholder({ disabled }: { disabled: boolean }) {
 
 // --- beat 1: change a row, watch it land ------------------------------------
 
-function Poke({ disabled, now, onPoked }: { disabled: boolean; now: number; onPoked: () => void }) {
-  const [notes, setNotes] = useState(DEFAULT_NOTES);
+function Poke({ disabled, now, pk, onReset, onPoked }: { disabled: boolean; now: number; pk: number; onReset: () => void; onPoked: () => void }) {
   const [row, setRow] = useState<RowView | null>(null);
   const [commitTs, setCommitTs] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -280,28 +313,33 @@ function Poke({ disabled, now, onPoked }: { disabled: boolean; now: number; onPo
 
   const refresh = useCallback(async () => {
     try {
-      setRow(await api<RowView>(`/demo/row/${DEMO_TABLE}/${DEMO_PK}`));
+      setRow(await api<RowView>(`/demo/row/${DEMO_TABLE}/${pk}`));
     } catch {
       /* the status strip already shows offline */
     }
-  }, []);
+  }, [pk]);
 
+  // a different row was picked: forget the old one's state and start polling the new one
   useEffect(() => {
+    setRow(null);
+    setCommitTs(null);
+    setErr(null);
     refresh();
     const id = setInterval(refresh, 1000);
     return () => clearInterval(id);
   }, [refresh]);
 
-  const poke = async (op: "c" | "u" | "d") => {
+  const send = async (op: "c" | "u" | "d", id: number, place?: string) => {
     setBusy(true);
     setErr(null);
     try {
-      const body: Record<string, unknown> = { op, table: DEMO_TABLE, pk: { observation_id: DEMO_PK } };
-      if (op !== "d") body.set = { notes };
-      const res = await api<{ commitTs: string }>(`/demo/poke`, { method: "POST", body: JSON.stringify(body) });
+      const res = await api<{ commitTs: string }>(`/demo/poke`, {
+        method: "POST",
+        body: JSON.stringify({ op, pk: { observation_id: id }, ...(place ? { place } : {}) }),
+      });
       setCommitTs(res.commitTs);
       onPoked();
-      refresh();
+      if (id === pk) refresh();
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -309,42 +347,73 @@ function Poke({ disabled, now, onPoked }: { disabled: boolean; now: number; onPo
     }
   };
 
+  // back to the safe starting point: the demo row, in its default place
+  // "c" creates the row or puts an existing one back, so this always works
+  const reset = () => {
+    onReset();
+    send("c", DEMO_PK, DEFAULT_PLACE);
+  };
+
   const srcNotes = row?.source ? String(row.source.notes ?? "") : null;
   const dstNotes = row?.dest ? String(row.dest.notes ?? "") : null;
   const landed = row !== null && srcNotes === dstNotes;
   const applied = row?.dest?.__bartie_updated_at;
   const tookMs = commitTs && applied && landed ? new Date(applied).getTime() - new Date(commitTs).getTime() : null;
+  const current = placeOf(srcNotes);
+  const demo = isDemo(pk);
+  const gone = row !== null && !row.source;
 
   return (
     <section className="border-b border-[var(--color-border)] px-4 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h3 className="font-medium">2. Change a row on the source</h3>
-        <span className="num">observations #{DEMO_PK}</span>
+        <span className="num">
+          observations #{pk} · {demo ? "demo row" : "live sighting"}
+        </span>
       </div>
-      <textarea
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        maxLength={500}
-        rows={2}
-        disabled={disabled}
-        aria-label="notes for the demo row"
-        className={`mt-3 w-full resize-none ${FIELD}`}
-      />
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Btn onClick={() => poke(row?.source ? "u" : "c")} disabled={disabled || busy}>
-          {row?.source ? "Update" : "Insert"}
+
+      <p className="mt-2 text-[11px] text-[var(--color-fg-dim)]">
+        {gone
+          ? demo
+            ? "This demo row does not exist yet. Reset creates it."
+            : "This sighting was retracted by the traffic writer. Pick another row above, or reset."
+          : "Move the sighting somewhere else. Pick a place and the change goes to the source."}
+      </p>
+
+      <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="move the sighting to">
+        {PLACES.map((p) => {
+          const active = p === current;
+          return (
+            <button
+              key={p}
+              type="button"
+              disabled={disabled || busy || gone || active}
+              aria-pressed={active}
+              onClick={() => send("u", pk, p)}
+              className={`rounded-sm border px-2 py-1 font-mono text-[11px] transition-colors disabled:cursor-not-allowed ${
+                active
+                  ? "border-[var(--color-fg)] bg-[var(--color-fg)] text-[var(--color-bg)]"
+                  : "border-[var(--color-border-strong)] hover:border-[var(--color-fg)] disabled:opacity-50"
+              }`}
+            >
+              {p.replace(/^the /, "")}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Btn onClick={reset} disabled={disabled || busy} subtle>
+          Reset to default
         </Btn>
-        <Btn onClick={() => poke("d")} disabled={disabled || busy || !row?.source} subtle>
-          Delete
-        </Btn>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => setNotes(notes.includes("SOUTH") ? notes.replace("SOUTH bank near the reeds", "NORTH ridge above the water") : DEFAULT_NOTES)}
-          className="num rounded-sm px-1 py-1.5 underline-offset-4 hover:underline disabled:opacity-50"
-        >
-          swap south/north
-        </button>
+        {demo ? (
+          <Btn onClick={() => send("d", pk)} disabled={disabled || busy || gone} subtle>
+            Delete
+          </Btn>
+        ) : null}
+        <span className="text-[11px] text-[var(--color-fg-dim)]">
+          reset goes back to demo row #{DEMO_PK} at {DEFAULT_PLACE.replace(/^the /, "")}
+        </span>
         {err ? <span className={`text-xs ${ERR_TEXT}`} role="alert">{err}</span> : null}
       </div>
 

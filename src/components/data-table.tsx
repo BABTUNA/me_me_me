@@ -71,6 +71,16 @@ export function planColumns(rows: TableRows | null): Plan {
   return { columns, widths, flex };
 }
 
+// lets a page make some rows clickable, like picking a row to edit
+export type RowSelect = {
+  // which rows can be picked
+  canPick: (row: Row) => boolean;
+  // called with the picked row
+  onPick: (row: Row) => void;
+  // primary key of the currently picked row, as a string
+  picked?: string;
+};
+
 // Two layouts. "fit" squeezes the table into its container (fixed layout,
 // ellipsis on the wordiest column) for the compact live panel. "scroll" shows
 // every value in full, lets the table be as wide as it needs, and scrolls the
@@ -83,6 +93,7 @@ export function SideTable({
   now,
   freshMs = 6000,
   layout = "fit",
+  select,
 }: {
   side: "source" | "dest";
   rows: TableRows | null;
@@ -90,10 +101,11 @@ export function SideTable({
   now: number;
   freshMs?: number;
   layout?: "fit" | "scroll";
+  select?: RowSelect;
 }) {
   const { columns, widths, flex } = plan;
   const cols = side === "dest" ? [...columns, "applied"] : columns;
-  if (layout === "scroll") return <ScrollTable side={side} rows={rows} columns={columns} cols={cols} flex={flex} now={now} freshMs={freshMs} />;
+  if (layout === "scroll") return <ScrollTable side={side} rows={rows} columns={columns} cols={cols} flex={flex} now={now} freshMs={freshMs} select={select} />;
   const chOf = (c: string) => (c === "applied" ? APPLIED_CH : widths[c]);
   const fixedCh = cols.reduce((sum, c) => sum + (chOf(c) ?? 0) + 0.5, 0);
   const minWidth = `calc(${fixedCh + (flex ? FLEX_MIN_CH : 0)}ch + ${cols.length * CELL_PAD_PX}px)`;
@@ -154,6 +166,7 @@ function ScrollTable({
   flex,
   now,
   freshMs,
+  select,
 }: {
   side: "source" | "dest";
   rows: TableRows | null;
@@ -162,6 +175,7 @@ function ScrollTable({
   flex: string | null;
   now: number;
   freshMs: number;
+  select?: RowSelect;
 }) {
   const list = rows?.[side] ?? [];
   if (!rows) return <Loading />;
@@ -192,10 +206,22 @@ function ScrollTable({
           {list.map((r, i) => {
             const applied = side === "dest" ? r.__bartie_updated_at : undefined;
             const fresh = applied ? now - new Date(applied).getTime() < freshMs : false;
+            const key = String(r[rows!.pk]);
+            const pickable = select ? select.canPick(r) : false;
+            const picked = pickable && select?.picked === key;
             return (
-              <tr key={`${String(r[rows!.pk])}-${i}`} className={`border-t border-[var(--color-border)] ${fresh ? "bg-[var(--color-accent-soft)]" : ""}`}>
+              <tr
+                key={`${key}-${i}`}
+                className={`border-t border-[var(--color-border)] ${fresh ? "bg-[var(--color-accent-soft)]" : ""} ${pickable ? "cursor-pointer hover:bg-[var(--color-surface-elev)]" : ""} ${picked ? "outline outline-1 -outline-offset-1 outline-[var(--color-accent)]" : ""}`}
+                onClick={pickable ? () => select!.onPick(r) : undefined}
+                onKeyDown={pickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select!.onPick(r); } } : undefined}
+                tabIndex={pickable ? 0 : undefined}
+                role={pickable ? "button" : undefined}
+                aria-pressed={pickable ? picked : undefined}
+                aria-label={pickable ? `edit ${rows!.pk} ${key}` : undefined}
+              >
                 {columns.map((c, ci) => (
-                  <td key={c} className={`px-2 py-1 align-top ${c === flex ? "" : "whitespace-nowrap"} ${ci === 0 ? sticky(0, fresh) : ""}`} title={c === flex ? undefined : String(r[c] ?? "")}>
+                  <td key={c} className={`px-2 py-1 align-top ${c === flex ? "" : "whitespace-nowrap"} ${ci === 0 ? sticky(0, fresh) : ""} ${ci === 0 && picked ? "text-[var(--color-accent)]" : ""}`} title={c === flex ? undefined : String(r[c] ?? "")}>
                     {c === flex ? <div className={`${WRAP_COL_MAX} break-words`}>{cell(r[c])}</div> : cell(r[c])}
                   </td>
                 ))}
