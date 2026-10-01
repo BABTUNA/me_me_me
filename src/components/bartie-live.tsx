@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { bartieApiUrl } from "@/lib/bartie";
+import { ago, planColumns, SideTable, type TableRows } from "@/components/data-table";
 
 // A window onto a running Bartie pipeline. Three beats: watch the numbers,
 // change a row on the source and watch it land, ask the replicated data a
@@ -54,14 +56,6 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
   return body as T;
-}
-
-function ago(iso: string | null | undefined, now: number): string {
-  if (!iso) return "—";
-  const s = Math.max(0, (now - new Date(iso).getTime()) / 1000);
-  if (s < 60) return `${s.toFixed(0)}s ago`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  return `${Math.floor(s / 3600)}h ago`;
 }
 
 function kb(n: number | null): string {
@@ -164,40 +158,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint: stri
 
 // --- beat 0: watch traffic land --------------------------------------------
 
-type TableRows = {
-  table: string;
-  pk: string;
-  recency: string;
-  source: Record<string, unknown>[];
-  dest: (Record<string, unknown> & { __bartie_updated_at?: string })[];
-};
-
 const TABLES = ["public.observations", "public.animals", "public.watering_holes"] as const;
-const HIDDEN = new Set(["__bartie_commit_ts", "__bartie_updated_at"]);
-
-function cell(v: unknown): string {
-  if (v === null || v === undefined) return "∅";
-  const s = typeof v === "string" ? v : JSON.stringify(v);
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) return s.slice(11, 19);
-  return s;
-}
-
-// Column sizing for a fixed-layout table. Every column gets a width in ch from
-// its longest visible value (or the longest word of its header, since headers
-// wrap at underscores), clamped so one long id cannot hog the row. The
-// wordiest column gets no width and soaks up whatever is left, truncating with
-// an ellipsis. Below fixed + FLEX_MIN_CH the table stops shrinking and the
-// wrapper scrolls instead, so the card never widens the page.
-const MIN_CH = 5;
-const MAX_CH = 12;
-const FLEX_MIN_CH = 12;
-const CELL_PAD_PX = 16; // px-2 on both sides; th is border-box so widths carry it
-const APPLIED_CH = 7; // "applied" / "59s ago"
-
-function headerWordLength(c: string): number {
-  const parts = c.split("_");
-  return Math.max(...parts.map((w, i) => w.length + (i < parts.length - 1 ? 1 : 0)));
-}
 
 function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
   const [table, setTable] = useState<(typeof TABLES)[number]>(TABLES[0]);
@@ -239,67 +200,7 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
     return () => { active = false; clearInterval(id); };
   }, [table]);
 
-  const columns = (() => {
-    const first = rows?.source[0] ?? rows?.dest[0];
-    if (!rows || !first) return [];
-    const rest = Object.keys(first).filter((k) => !HIDDEN.has(k) && k !== rows.pk && k !== rows.recency);
-    return [rows.pk, rows.recency, ...rest];
-  })();
-
-  // One sizing plan for both tables so their columns line up.
-  const { widths, flex } = (() => {
-    const widths: Record<string, number> = {};
-    if (!rows || columns.length === 0) return { widths, flex: null as string | null };
-    const all = [...rows.source, ...rows.dest];
-    const longest = (c: string) => all.reduce((m, r) => Math.max(m, cell(r[c]).length), 0);
-    const candidates = columns.filter((c) => c !== rows.pk && c !== rows.recency);
-    const flex = candidates.length > 0 ? candidates.reduce((a, b) => (longest(b) > longest(a) ? b : a)) : null;
-    for (const c of columns) {
-      if (c !== flex) widths[c] = Math.min(MAX_CH, Math.max(MIN_CH, longest(c), headerWordLength(c)));
-    }
-    return { widths, flex };
-  })();
-
-  const grid = (side: "source" | "dest") => {
-    const cols = side === "dest" ? [...columns, "applied"] : columns;
-    const chOf = (c: string) => (c === "applied" ? APPLIED_CH : widths[c]);
-    const fixedCh = cols.reduce((sum, c) => sum + (chOf(c) ?? 0) + 0.5, 0);
-    const minWidth = `calc(${fixedCh + (flex ? FLEX_MIN_CH : 0)}ch + ${cols.length * CELL_PAD_PX}px)`;
-    const width = (c: string) => {
-      const ch = chOf(c);
-      return ch === undefined ? undefined : `calc(${ch + 0.5}ch + ${CELL_PAD_PX}px)`;
-    };
-    return (
-      <div className="min-w-0 overflow-x-auto">
-        <table className="w-full table-fixed border-collapse font-mono text-[11px]" style={{ minWidth }}>
-          <thead>
-            <tr className="text-left text-[var(--color-fg-dim)]">
-              {cols.map((c) => (
-                <th key={c} className="break-words px-2 py-1 font-normal align-bottom" style={{ width: width(c) }} title={c}>
-                  {c.replace(/_/g, "_\u200b")}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {(rows?.[side] ?? []).map((r) => {
-              const applied = side === "dest" ? (r as { __bartie_updated_at?: string }).__bartie_updated_at : undefined;
-              const fresh = applied ? now - new Date(applied).getTime() < 6000 : false;
-              return (
-                <tr key={String(r[rows!.pk])} className={`border-t border-[var(--color-border)] ${fresh ? "bg-[var(--color-accent-soft)]" : ""}`}>
-                  {columns.map((c) => <td key={c} className="truncate px-2 py-1 align-top" title={String(r[c] ?? "")}>{cell(r[c])}</td>)}
-                  {side === "dest" ? <td className="truncate px-2 py-1 align-top text-[var(--color-fg-dim)]">{applied ? ago(applied, now) : "—"}</td> : null}
-                </tr>
-              );
-            })}
-            {rows && rows[side].length === 0 ? (
-              <tr><td colSpan={cols.length} className="px-2 py-2 text-[var(--color-fg-dim)]">no rows</td></tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
+  const plan = planColumns(rows);
 
   return (
     <section className="border-b border-[var(--color-border)] px-4 py-4">
@@ -321,7 +222,8 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
       </div>
       <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[11px] text-[var(--color-fg-dim)]">
         <span>
-          newest rows by {rows?.recency ?? "recency"} on each side. A ranger-log writer adds a sighting every couple of seconds; highlighted rows landed in the last few seconds.
+          newest rows by {rows?.recency ?? "recency"} on each side. A ranger-log writer adds a sighting every couple of seconds; highlighted rows landed in the last few seconds.{" "}
+          <Link href="/bartie/data" className="underline underline-offset-2 hover:text-[var(--color-fg)]">browse both databases</Link>
         </span>
         <button
           type="button"
@@ -336,8 +238,8 @@ function TablePanel({ disabled, now }: { disabled: boolean; now: number }) {
         {trafficErr ? <span className="text-amber-500">{trafficErr}</span> : null}
       </p>
       <div className="mt-3 grid min-w-0 gap-px bg-[var(--color-border)]">
-        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">source (terra)</div>{grid("source")}</div>
-        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">destination (warehouse)</div>{grid("dest")}</div>
+        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">source (terra)</div><SideTable side="source" rows={rows} plan={plan} now={now} /></div>
+        <div className="min-w-0 bg-[var(--color-surface)] py-2"><div className="num px-2 pb-1">destination (warehouse)</div><SideTable side="dest" rows={rows} plan={plan} now={now} /></div>
       </div>
     </section>
   );
