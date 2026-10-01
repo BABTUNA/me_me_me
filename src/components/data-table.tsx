@@ -102,6 +102,7 @@ export function SideTable({
     return ch === undefined ? undefined : `calc(${ch + 0.5}ch + ${CELL_PAD_PX}px)`;
   };
   const list = rows?.[side] ?? [];
+  if (!rows) return <Loading />;
   return (
     <div className="min-w-0 overflow-x-auto">
       <table className="w-full table-fixed border-collapse font-mono text-[11px]" style={{ minWidth }}>
@@ -134,6 +135,12 @@ export function SideTable({
   );
 }
 
+// Before the first response there are no columns to draw, so a header-less
+// table would be an empty box. One dim line keeps the slot visibly alive.
+function Loading() {
+  return <p className="px-2 py-2 font-mono text-[11px] text-[var(--color-fg-dim)]" aria-live="polite">loading…</p>;
+}
+
 // The wordiest column (notes, embedded text) wraps at this width instead of
 // running on in one line: an unbounded nowrap cell for a 300-character value
 // is wider than any pane and spills into the next column.
@@ -157,6 +164,7 @@ function ScrollTable({
   freshMs: number;
 }) {
   const list = rows?.[side] ?? [];
+  if (!rows) return <Loading />;
   // The sticky cell needs an opaque background so scrolled columns slide under
   // it. On a fresh row the translucent accent tint is laid over that opaque
   // surface with an inset shadow, so the id cell matches the rest of the row.
