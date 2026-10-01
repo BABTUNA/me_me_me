@@ -93,7 +93,7 @@ export function SideTable({
 }) {
   const { columns, widths, flex } = plan;
   const cols = side === "dest" ? [...columns, "applied"] : columns;
-  if (layout === "scroll") return <ScrollTable side={side} rows={rows} columns={columns} cols={cols} now={now} freshMs={freshMs} />;
+  if (layout === "scroll") return <ScrollTable side={side} rows={rows} columns={columns} cols={cols} flex={flex} now={now} freshMs={freshMs} />;
   const chOf = (c: string) => (c === "applied" ? APPLIED_CH : widths[c]);
   const fixedCh = cols.reduce((sum, c) => sum + (chOf(c) ?? 0) + 0.5, 0);
   const minWidth = `calc(${fixedCh + (flex ? FLEX_MIN_CH : 0)}ch + ${cols.length * CELL_PAD_PX}px)`;
@@ -134,11 +134,17 @@ export function SideTable({
   );
 }
 
+// The wordiest column (notes, embedded text) wraps at this width instead of
+// running on in one line: an unbounded nowrap cell for a 300-character value
+// is wider than any pane and spills into the next column.
+const WRAP_COL_MAX = "max-w-[32rem]";
+
 function ScrollTable({
   side,
   rows,
   columns,
   cols,
+  flex,
   now,
   freshMs,
 }: {
@@ -146,14 +152,24 @@ function ScrollTable({
   rows: TableRows | null;
   columns: string[];
   cols: string[];
+  flex: string | null;
   now: number;
   freshMs: number;
 }) {
   const list = rows?.[side] ?? [];
+  // The sticky cell needs an opaque background so scrolled columns slide under
+  // it. On a fresh row the translucent accent tint is laid over that opaque
+  // surface with an inset shadow, so the id cell matches the rest of the row.
   const sticky = (i: number, fresh: boolean) =>
-    i === 0 ? `sticky left-0 z-[1] ${fresh ? "bg-[var(--color-surface-elev)]" : "bg-[var(--color-surface)]"} shadow-[1px_0_0_var(--color-border)]` : "";
+    i === 0
+      ? `sticky left-0 z-[1] bg-[var(--color-surface)] ${fresh ? "shadow-[inset_0_0_0_100vw_var(--color-accent-soft),1px_0_0_var(--color-border)]" : "shadow-[1px_0_0_var(--color-border)]"}`
+      : "";
   return (
-    <div className="min-w-0 overflow-x-auto">
+    <div
+      className="min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--color-accent)]"
+      tabIndex={0}
+      aria-label={`${side === "dest" ? "destination" : "source"} rows, scrolls sideways`}
+    >
       <table className="w-max min-w-full border-collapse font-mono text-[11px]">
         <thead>
           <tr className="text-left text-[var(--color-fg-dim)]">
@@ -171,8 +187,8 @@ function ScrollTable({
             return (
               <tr key={`${String(r[rows!.pk])}-${i}`} className={`border-t border-[var(--color-border)] ${fresh ? "bg-[var(--color-accent-soft)]" : ""}`}>
                 {columns.map((c, ci) => (
-                  <td key={c} className={`max-w-[48rem] whitespace-nowrap px-2 py-1 align-top ${ci === 0 ? sticky(0, fresh) : ""}`} title={String(r[c] ?? "")}>
-                    {cell(r[c])}
+                  <td key={c} className={`px-2 py-1 align-top ${c === flex ? "" : "whitespace-nowrap"} ${ci === 0 ? sticky(0, fresh) : ""}`} title={c === flex ? undefined : String(r[c] ?? "")}>
+                    {c === flex ? <div className={`${WRAP_COL_MAX} break-words`}>{cell(r[c])}</div> : cell(r[c])}
                   </td>
                 ))}
                 {side === "dest" ? <td className="whitespace-nowrap px-2 py-1 align-top text-[var(--color-fg-dim)]">{applied ? ago(applied, now) : "—"}</td> : null}
