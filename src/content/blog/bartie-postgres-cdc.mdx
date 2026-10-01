@@ -82,24 +82,22 @@ The repository includes separate scenarios for streaming recovery and backfill:
 
 These scripts exercise concrete failure scenarios. They do not establish recovery from every possible failure, particularly loss of the broker's durable data or an interrupted initial snapshot.
 
-## What the latency numbers mean
+## Streaming versus re-copying the table
 
-Destination rows carry two timestamps: the source transaction's commit time and the destination merge statement's time. Their difference gives a practical measure of how long a surviving row's latest change took to reach the merge. It does not measure every event or the exact moment the destination transaction became visible.
+On a laptop, a change reaches the destination about **1.1 seconds** after it commits on the source ([recorded results](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/README.md#why-streaming-cdc-vs-batch-snapshots)). Most of that is the writer's two-second flush window: smaller batches would show changes sooner, larger ones amortize more merge work.
 
-The [README's recorded laptop results](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/README.md#why-streaming-cdc-vs-batch-snapshots) report roughly **1.1 seconds average streaming latency**, alongside these full-table copy times:
+A latency number needs a baseline. The alternative to CDC is re-copying the table on a schedule, and its freshness floor is how long one full copy takes:
 
-| Rows in batch table | Full-table copy time |
-| ---: | ---: |
-| 10,000 | 0.20 seconds |
-| 100,000 | 0.55 seconds |
-| 1,000,000 | 2.51 seconds |
-| 10,000,000 | 44.2 seconds |
+| Rows | Full-table copy | Streaming CDC |
+| ---: | ---: | ---: |
+| 10,000 | 0.20 s | 1.1 s |
+| 100,000 | 0.55 s | 1.1 s |
+| 1,000,000 | 2.51 s | 1.1 s |
+| 10,000,000 | 44.2 s | 1.1 s |
 
-The comparison makes the cost of repeatedly copying a growing table concrete. At small sizes, a full copy can be quicker than waiting for Bartie's two-second flush window.
+At small sizes the copy wins. The lines cross near a million rows. Past that, the copy grows with the table while CDC only ever touches the change.
 
-The [benchmark](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/bench-vs-batch.sh) measures CDC latency once on terra and reuses it while testing batch copies at different sizes. These single-broker laptop results illustrate the tradeoff; they do not establish CDC latency at larger scales.
-
-The flush interval is also a deliberate tradeoff: smaller batches can make changes visible sooner, while larger batches amortize destination merge work.
+How it's measured: every destination row carries the source commit time and the time the merge applied it, and latency is the difference. That captures the latest change to rows that still exist, not every event. The [benchmark](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/bench-vs-batch.sh) measured the CDC figure once on terra and reused it across table sizes, on a single-broker laptop, so the table shows the shape of the tradeoff, not CDC latency at scale.
 
 ## Where the project stops
 
