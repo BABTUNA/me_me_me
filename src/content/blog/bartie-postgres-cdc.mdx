@@ -7,86 +7,63 @@ authorship: hybrid
 tags: ["bartie", "go", "postgres", "cdc", "distributed systems", "kafka"]
 ---
 
-I built **[Bartie](https://github.com/BABTUNA/Bartie)** as a small study of streaming replication, inspired by [Artie](https://artie.com). It reads changes from a Postgres database's write-ahead log, sends them through Redpanda, and applies them to a second Postgres database. Existing rows come through a snapshot backfill first.
-
-For background, Artie's [Introducing Artie Transfer](https://www.artie.com/blogs/introducing-artie-transfer) lays out the reader/writer architecture and when to commit offsets. [Not All CDC Pipelines Are Created Equal](https://www.artie.com/blogs/not-all-cdc-pipelines-are-created-equal#4-minimizing-data-indigestion) digs into buffering, consistency, and handling schema changes.
-
-I kept it to one source and one destination so I could trace each change through the pipeline and understand what happens when a process crashes.
+I built **[Bartie](https://github.com/BABTUNA/Bartie)** to understand how streaming replication works, inspired by [Artie](https://artie.com) and their post [Introducing Artie Transfer](https://www.artie.com/blogs/introducing-artie-transfer). It reads changes from a Postgres write-ahead log, sends them through Redpanda, and applies them to a second Postgres database. I kept it to one source and one destination so I could follow each change through the pipeline and see what happens when a process crashes.
 
 ## See it run
 
 <YouTube id="FJlTLkR3MAs" title="Bartie: architecture, live replication, and code walkthrough" />
 
-The demo uses Artie's [terra dataset](https://github.com/artie-labs/terra), with animals, observations, and watering holes. It gives the pipeline real tables to copy and a straightforward way to watch inserts, updates, and deletes arrive downstream.
+The demo uses Artie's [terra dataset](https://github.com/artie-labs/terra): animals, observations, and watering holes.
 
 ## The pipeline
 
-There are two long-running Go processes:
+Two Go processes with Redpanda between them:
 
 - The **reader** decodes Postgres logical replication messages and publishes change events.
-- The **writer** consumes those events, groups them into batches, and merges them into the destination.
-
-Redpanda sits between them as a Kafka-compatible buffer. A separate command, `cdcctl`, checks the resulting data and reports latency.
+- The **writer** consumes those events in batches and merges them into the destination.
 
 <BlogImage
   src="/blog/bartie-architecture.png"
   alt="Bartie pipeline: source Postgres sends WAL to a reader, which publishes JSON events to Redpanda. A writer applies staging merges to destination Postgres. Acknowledgments follow durable writes, and cdcctl compares both databases."
-  caption="The repository's architecture diagram. The recovery boundaries and current limitations are described below."
 />
 
 [Open the full-size architecture diagram](/blog/bartie-architecture.png)
 
-Every change uses the same [event envelope](https://github.com/BABTUNA/Bartie/blob/d8da47c5f6ecfdf51f1ae7ec7cf99e9bb88ba993/internal/events/event.go): an operation, table name, primary key, row values, source column types, and replication metadata. Snapshot rows use the operation `r`, for “read,” and follow the same apply path as inserts and updates.
-
-The Kafka message key combines the table and primary key. Changes to the same row therefore go to the same partition, preserving the ordering the writer needs when it collapses a batch to final row states.
+Every change travels in the same [event envelope](https://github.com/BABTUNA/Bartie/blob/d8da47c5f6ecfdf51f1ae7ec7cf99e9bb88ba993/internal/events/event.go), including rows from the initial snapshot. The Kafka key is the table plus the primary key, so changes to one row stay in order.
 
 ## Two rules for acknowledging progress
 
-The [reader](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/internal/reader/reader.go) buffers a source transaction's changes until its commit message arrives. It stamps the events with the commit position and timestamp, then publishes them synchronously. Only after the broker acknowledges the publish does the reader advance the WAL position it reports back to Postgres.
+The [reader](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/internal/reader/reader.go) tells Postgres it has consumed a WAL position only after Redpanda has confirmed the events. The [writer](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/internal/writer/writer.go) commits a Kafka offset only after the destination transaction has committed.
 
-Acknowledging earlier would let the source discard changes that had not safely reached the next stage.
-
-The [writer](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/internal/writer/writer.go) follows the corresponding rule: apply the buffered changes, commit the destination transactions, and only then commit the Kafka offsets.
-
-That leaves an unavoidable crash window. The destination can commit successfully while the offset remains uncommitted. After a restart, those messages can arrive again. Bartie handles that window with **at-least-once delivery and idempotent application of row state**.
-
-For example, replaying an update that sets an animal's status to `adult` sets the same value again. Replaying a delete leaves the row absent. This is the intended behavior for a live copy of a table. The destination is not an archive of every intermediate change.
+A crash between those steps means some changes are delivered twice. That is safe, because applying the same row state again gives the same result.
 
 ## Why the writer uses staging and merge
 
-The writer flushes at **500 buffered events or two seconds**, whichever threshold is reached first. For each table, it:
+The writer flushes every **500 events or two seconds**. For each table, it:
 
 1. Folds the batch into one final event per primary key.
 2. Loads those events into a temporary staging table.
 3. Runs a `MERGE` to insert, update, or delete destination rows.
 4. Commits that table's transaction.
 
-Kafka offsets advance after all the table flushes succeed. If a crash happens partway through, already-applied work may be replayed along with the rest.
-
-Bartie commits each destination table separately. If a source transaction changes several tables, readers may see some of those changes before the rest arrive.
-
 ## Backfill needs a precise starting point
 
-Bartie creates a replication slot with an exported snapshot, copies existing rows from that snapshot, then streams the changes retained in the WAL. This gives the initial copy and live stream a shared starting point, so writes during backfill are still captured. Snapshot rows use the same event format and apply path as live changes.
+Bartie creates a replication slot with an exported snapshot, copies existing rows from that snapshot, then streams from the same WAL position. Writes that happen during the copy are not lost.
 
-Two limits follow from this [design](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/docs/phase-4-backfill.md). The exported snapshot lives only as long as the connection that created it, so a crash mid-backfill means starting over. And the slot holds WAL on the source from the moment it's created, so a long backfill on a busy database grows the source's disk until streaming catches up.
+The [design](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/docs/phase-4-backfill.md) has two limits. A crash mid-backfill means starting over, and a long backfill holds WAL on the source until streaming catches up.
 
 ## Checking the copy after a crash
 
-The repository includes separate scenarios for streaming recovery and backfill:
+- [`crash-test.sh`](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/crash-test.sh) kills the writer and reader during a stream of mixed writes, restarts them, and verifies.
+- [`backfill-test.sh`](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/backfill-test.sh) writes to the source while the initial copy runs, then verifies.
 
-- [`crash-test.sh`](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/crash-test.sh) generates mixed writes, kills the writer and reader during the stream, restarts them, and invokes verification.
-- [`backfill-test.sh`](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/backfill-test.sh) starts from seeded tables and generates live writes while the initial copy runs.
-
-`cdcctl verify` compares row counts and deterministic checksums of the source columns in both databases. It excludes Bartie's destination-only metadata columns. Checking values as well as counts matters: a table with the right number of rows can still contain incorrect data.
-
-These scripts exercise concrete failure scenarios. They do not establish recovery from every possible failure, particularly loss of the broker's durable data or an interrupted initial snapshot.
+`cdcctl verify` compares row counts and checksums of every table in both databases. Counts alone are not enough, because a table can have the right number of rows and the wrong data.
 
 ## Streaming versus re-copying the table
 
 On a laptop, a change reaches the destination about **1.1 seconds** after it commits on the source ([recorded results](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/README.md#why-streaming-cdc-vs-batch-snapshots)). Most of that is the writer's two-second flush window.
 
-The alternative to CDC is re-copying the table on a schedule, which can never be fresher than one full copy takes:
+The alternative is re-copying the table on a schedule, which can never be fresher than one full copy takes:
 
 | Rows | Full-table copy | Streaming CDC |
 | ---: | ---: | ---: |
@@ -95,12 +72,10 @@ The alternative to CDC is re-copying the table on a schedule, which can never be
 | 1,000,000 | 2.51 s | 1.1 s |
 | 10,000,000 | 44.2 s | 1.1 s |
 
-At small sizes the copy wins. The lines cross near a million rows, and past that the copy grows with the table while CDC only touches the change.
-
-Latency is the gap between the source commit time and the merge time stamped on each destination row. The [benchmark](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/bench-vs-batch.sh) measured CDC once on terra, on a single-broker laptop, and reused it across table sizes, so the table shows the shape of the tradeoff, not CDC latency at scale.
+At small sizes the copy wins. Past about a million rows, the copy grows with the table while CDC only touches the change. The [benchmark](https://github.com/BABTUNA/Bartie/blob/77ca1d744550339c9d3970c02302b361f0f90cea/scripts/bench-vs-batch.sh) ran on a single-broker laptop, so the numbers show the trend, not CDC latency at scale.
 
 ## Where the project stops
 
 Bartie requires primary keys and does not yet support schema evolution, `TRUNCATE`, or resumable backfill.
 
-**[Explore Bartie on GitHub](https://github.com/BABTUNA/Bartie)** or watch the demo above.
+**[Explore Bartie on GitHub](https://github.com/BABTUNA/Bartie)**, or read the follow-up, [Super Bartie](/blog/super-bartie).
