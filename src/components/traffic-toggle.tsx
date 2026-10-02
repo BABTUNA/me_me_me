@@ -3,11 +3,9 @@
 import { useEffect, useState } from "react";
 import { superBartieApiUrl } from "@/lib/super-bartie";
 
-// shows whether the demo traffic script is writing and lets you switch it
+// shows whether the demo traffic script is writing and lets anyone switch it
 // used on the live console and the data browser so both pages agree
-//
-// when the api is token gated the switch needs a bearer token, read from
-// localStorage["bartie_token"], so visitors see the state and the owner can flip it
+// a pause lasts ten minutes at most, then the server turns traffic back on
 
 const WARN_TEXT = "text-amber-700 [[data-theme=dark]_&]:text-amber-400";
 
@@ -31,19 +29,16 @@ export function TrafficToggle({ disabled = false }: { disabled?: boolean }) {
     if (on === null) return;
     setErr(null);
     try {
-      let token = "";
-      try { token = localStorage.getItem("bartie_token") ?? ""; } catch { /* private mode */ }
       const res = await fetch(`${superBartieApiUrl}/demo/traffic`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: !on }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
       setOn(body.enabled);
     } catch (e) {
-      const msg = (e as Error).message;
-      setErr(msg.includes("token") ? "locked (owner only)" : msg);
+      setErr((e as Error).message);
     }
   };
 
@@ -54,7 +49,7 @@ export function TrafficToggle({ disabled = false }: { disabled?: boolean }) {
         onClick={toggle}
         disabled={disabled || on === null}
         aria-pressed={on === true}
-        title="pause or resume the demo writer"
+        title="pause or resume the demo writer, it resumes on its own after ten minutes"
         className="inline-flex items-center gap-1.5 rounded-sm border border-[var(--color-border-strong)] px-2 py-1 font-mono text-[11px] text-[var(--color-fg)] transition-colors hover:border-[var(--color-fg)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={`inline-block h-1.5 w-1.5 ${on ? "bg-emerald-500" : "bg-[var(--color-fg-dim)]"}`} aria-hidden="true" />
