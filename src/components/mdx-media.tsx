@@ -105,21 +105,31 @@ export function DriveEmbed({ id, title, tall = false }: DriveEmbedProps) {
 type LinkButtonProps = {
   href: string;
   children: React.ReactNode;
+  // solid is the main action, outline is a second option next to it
+  variant?: "solid" | "outline";
 };
 
-// a link that looks like a button, for the one thing a post wants you to click
-export function LinkButton({ href, children }: LinkButtonProps) {
+// a link that looks like a button, for the things a post wants you to click
+// the site's base link rule sets color on every anchor and outranks utility classes,
+// so the text color is set inline
+export function LinkButton({ href, children, variant = "solid" }: LinkButtonProps) {
+  const solid = variant === "solid";
   return (
-    <p className="mt-6">
-      <Link
-        href={href}
-        className="arrow-link rounded-sm bg-[var(--color-accent)] px-5 py-3 font-mono text-sm hover:opacity-90"
-        // the site's base link rule sets color on every anchor and outranks utility classes,
-        // so the text color is set inline to stay readable on the accent background
-        style={{ color: "var(--color-on-accent)" }}
-      >
-        {children} <Arrow />
-      </Link>
-    </p>
+    <Link
+      href={href}
+      className={`arrow-link rounded-sm px-5 py-3 font-mono text-sm ${
+        solid
+          ? "bg-[var(--color-accent)] hover:opacity-90"
+          : "border border-[var(--color-border-strong)] hover:border-[var(--color-fg)]"
+      }`}
+      style={{ color: solid ? "var(--color-on-accent)" : "var(--color-fg)" }}
+    >
+      {children} <Arrow />
+    </Link>
   );
+}
+
+// lays out one or more link buttons on a line, wrapping on narrow screens
+export function ButtonRow({ children }: { children: React.ReactNode }) {
+  return <div className="mt-6 flex flex-wrap gap-3">{children}</div>;
 }

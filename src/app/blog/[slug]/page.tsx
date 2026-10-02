@@ -8,7 +8,7 @@ import { PostCategoryBadge } from "@/components/post-category-badge";
 import { AuthorshipBadge } from "@/components/authorship-badge";
 import { ViewCounter } from "@/components/view-counter";
 import { getAllPosts, getPost } from "@/lib/posts";
-import { BlogImage, DriveEmbed, LinkButton, YouTube } from "@/components/mdx-media";
+import { BlogImage, ButtonRow, DriveEmbed, LinkButton, YouTube } from "@/components/mdx-media";
 import { useMDXComponents } from "../../../../mdx-components";
 
 export function generateStaticParams() {
@@ -43,6 +43,7 @@ export default async function PostPage({
     YouTube,
     DriveEmbed,
     LinkButton,
+    ButtonRow,
   });
 
   return (
