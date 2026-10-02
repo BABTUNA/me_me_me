@@ -23,7 +23,6 @@ On the live demo you can watch rows get replicated, change a row yourself, pause
 <BlogImage
   src="/blog/super-bartie-architecture.png"
   alt="Super Bartie architecture. Top: source Postgres sends WAL to the reader, which publishes events to Redpanda. Two consumers read them: the writer merges rows into replica tables and the vecwriter upserts embeddings into a vector table, which is copied to a snapshot every five minutes. Bottom: the web page and Claude Code call the control API, which runs keyword and vector search and passes the top rows to a model."
-  caption="The top half is the pipeline. The reader publishes changes to Redpanda and two consumers write them to the destination, one as tables and one as vectors. The bottom half is what I built around it."
 />
 
 [Open the full-size diagram](/blog/super-bartie-architecture.png)
