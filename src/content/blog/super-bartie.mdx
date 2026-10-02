@@ -20,17 +20,19 @@ On the live demo you can watch rows get replicated, change a row yourself, pause
 
 ## What I added
 
-### 1. An API that shows where the lag is
+### 1. An HTTP API
 
-With Bartie, the only way to see what was happening was to read logs. I added an [HTTP API](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-6-control-api.md) that reports status, errors, and latency. It also returns three numbers that show which part of the pipeline is slow:
+With Bartie, the only way to see what was happening was to read logs. I added an [HTTP API](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-6-control-api.md) so the pipeline can be checked and controlled from outside:
 
-| Number | What it measures | If it grows |
-| --- | --- | --- |
-| Reader lag | How far the source WAL is ahead of the reader | The reader or the source is slow |
-| Backlog | Messages in Redpanda the writer has not applied yet | The writer is behind |
-| Merge time | How long each `MERGE` takes on the destination | The destination is slow |
+| Endpoint | What it does |
+| --- | --- |
+| Status | Whether the pipeline is running or paused, which tables it copies, and which processes are up |
+| Usage | Latency per table, plus reader lag, backlog, and merge time, which show which part is slow |
+| Error log | What failed and in which process |
+| Verify | Compares checksums of every table in both databases |
+| Pause and resume | Stops and restarts the writer |
 
-I copied the URL layout from Artie's public API. Their usage endpoint returns latency per table, and mine adds these three fields.
+I copied the URL layout from Artie's public API, so the two are easy to compare.
 
 ### 2. A second destination for vectors
 
