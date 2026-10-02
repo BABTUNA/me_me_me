@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
+import { Arrow } from "@/components/arrow";
 
 type BlogImageProps = {
   src: string;
@@ -97,5 +99,27 @@ export function DriveEmbed({ id, title, tall = false }: DriveEmbedProps) {
         Open in Google Drive
       </a>
     </figure>
+  );
+}
+
+type LinkButtonProps = {
+  href: string;
+  children: React.ReactNode;
+};
+
+// a link that looks like a button, for the one thing a post wants you to click
+export function LinkButton({ href, children }: LinkButtonProps) {
+  return (
+    <p className="mt-6">
+      <Link
+        href={href}
+        className="arrow-link rounded-sm bg-[var(--color-accent)] px-5 py-3 font-mono text-sm hover:opacity-90"
+        // the site's base link rule sets color on every anchor and outranks utility classes,
+        // so the text color is set inline to stay readable on the accent background
+        style={{ color: "var(--color-on-accent)" }}
+      >
+        {children} <Arrow />
+      </Link>
+    </p>
   );
 }

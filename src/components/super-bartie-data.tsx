@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { superBartieApiUrl } from "@/lib/super-bartie";
 import { planColumns, SideTable, type TableRows } from "@/components/data-table";
 
@@ -127,11 +126,6 @@ export function SuperBartieData() {
           {body("dest")}
         </Pane>
       </div>
-
-      <p className="mt-6 text-xs text-[var(--color-fg-dim)]">
-        Tables scroll sideways and the id column stays in place. Highlighted rows on the destination were applied in the last ten seconds. The <code className="font-mono">bartie_vectors</code> table holds one sentence per animal and observation, which is what step 3 on the{" "}
-        <Link href="/super-bartie/live" className="content-link">live page</Link> searches. Its embedding column is hidden because it is 1536 numbers per row.
-      </p>
     </div>
   );
 }
