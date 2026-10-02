@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { superBartieApiUrl } from "@/lib/super-bartie";
 import { ago, planColumns, SideTable, type RowSelect, type TableRows } from "@/components/data-table";
+import { TrafficToggle } from "@/components/traffic-toggle";
 
 // A window onto a running Super Bartie pipeline. Three beats: watch the numbers,
 // change a row on the source and watch it land, ask the replicated data a
@@ -269,37 +270,11 @@ const TABLES = ["public.observations", "public.animals", "public.watering_holes"
 function TablePanel({ disabled, now, picked, onPick }: { disabled: boolean; now: number; picked: number; onPick: (id: number) => void }) {
   const [table, setTable] = useState<(typeof TABLES)[number]>(TABLES[0]);
   const [rows, setRows] = useState<TableRows | null>(null);
-  const [traffic, setTraffic] = useState<boolean | null>(null);
-  const [trafficErr, setTrafficErr] = useState<string | null>(null);
-
-  // The demo writer can be switched off. When the api is token-gated the
-  // switch needs a bearer token, read from localStorage["bartie_token"], so
-  // visitors see the state and the owner can flip it.
-  const toggleTraffic = async () => {
-    if (traffic === null) return;
-    setTrafficErr(null);
-    try {
-      let token = "";
-      try { token = localStorage.getItem("bartie_token") ?? ""; } catch { /* private mode */ }
-      const res = await api<{ enabled: boolean }>(`/demo/traffic`, {
-        method: "POST",
-        body: JSON.stringify({ enabled: !traffic }),
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      setTraffic(res.enabled);
-    } catch (e) {
-      setTrafficErr((e as Error).message.includes("token") ? "locked (owner only)" : (e as Error).message);
-    }
-  };
-
   useEffect(() => {
     let active = true;
     const tick = () =>
-      Promise.all([
-        api<TableRows>(`/demo/table/${table}?limit=6`),
-        api<{ enabled: boolean }>(`/demo/traffic`),
-      ])
-        .then(([r, t]) => { if (active) { setRows(r); setTraffic(t.enabled); } })
+      api<TableRows>(`/demo/table/${table}?limit=6`)
+        .then((r) => { if (active) setRows(r); })
         .catch(() => {});
     tick();
     const id = setInterval(tick, 2000);
@@ -342,18 +317,7 @@ function TablePanel({ disabled, now, picked, onPick }: { disabled: boolean; now:
           Newest rows on each side. A script adds a sighting every two seconds. Highlighted rows arrived in the last few seconds. Click a sighting to edit it in step 2.{" "}
           <Link href="/super-bartie/data" className="underline underline-offset-2 hover:text-[var(--color-fg)]">browse both databases</Link>
         </span>
-        <button
-          type="button"
-          onClick={toggleTraffic}
-          disabled={disabled || traffic === null}
-          aria-pressed={traffic === true}
-          className="inline-flex items-center gap-1.5 rounded-sm border border-[var(--color-border-strong)] px-2 py-1 font-mono text-[11px] text-[var(--color-fg)] transition-colors hover:border-[var(--color-fg)] disabled:cursor-not-allowed disabled:opacity-50"
-          title="pause or resume the demo writer"
-        >
-          <span className={`inline-block h-1.5 w-1.5 ${traffic ? "bg-emerald-500" : "bg-[var(--color-fg-dim)]"}`} aria-hidden="true" />
-          traffic {traffic === null ? "…" : traffic ? "on" : "off"}
-        </button>
-        {trafficErr ? <span className={WARN_TEXT}>{trafficErr}</span> : null}
+        <TrafficToggle disabled={disabled} />
       </p>
       <div className="mt-3 grid min-w-0 gap-px bg-[var(--color-border)]">
         <div className="min-w-0 bg-[var(--color-surface)] py-2">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { superBartieApiUrl } from "@/lib/super-bartie";
 import { planColumns, SideTable, type TableRows } from "@/components/data-table";
+import { TrafficToggle } from "@/components/traffic-toggle";
 
 // The whole of both databases, one table at a time, side by side. Pages
 // through by primary key or shows newest first; refreshes on a timer so
@@ -104,6 +105,7 @@ export function SuperBartieData() {
             </button>
           ))}
         </div>
+        <TrafficToggle />
         <div className="ml-auto flex items-center gap-2 font-mono text-xs text-[var(--color-fg-muted)]" role="group" aria-label="page">
           <button type="button" aria-label="previous page" onClick={() => page(Math.max(0, offset - PAGE))} disabled={offset === 0} className={`${BTN} ${PAGER}`}>‹</button>
           <span className="whitespace-nowrap tabular-nums" aria-live="polite">{range}</span>
