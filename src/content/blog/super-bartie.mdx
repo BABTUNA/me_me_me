@@ -17,7 +17,7 @@ The pipeline is running at **[/super-bartie/live](/super-bartie/live)**. You can
 
 ### 1. An API that shows where the lag is
 
-With Bartie, the only way to see what was happening was to read logs. I added an [HTTP API](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-6-control-api.md) that reports status, errors, and latency. Latency alone did not tell me which part was slow, so it also returns three more numbers:
+With Bartie, the only way to see what was happening was to read logs. I added an [HTTP API](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-6-control-api.md) that reports status, errors, and latency. It also returns three numbers that show which part of the pipeline is slow:
 
 | Number | What it measures | If it grows |
 | --- | --- | --- |
@@ -29,13 +29,13 @@ I copied the URL layout from Artie's public API. Their usage endpoint returns la
 
 ### 2. A second destination for vectors
 
-Artie has [written about](https://www.artie.com/blogs/ai-data-integration) why AI systems need fresh data, and I wanted to see it for myself. I added a [second consumer](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-7-vector-destination.md) that reads the same Redpanda topic as the writer. For each changed row it builds a sentence, embeds it, and stores it in pgvector.
+I added a [second consumer](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-7-vector-destination.md) that reads the same Redpanda topic as the writer. For each changed row it builds a sentence, embeds it, and stores it in pgvector. The idea came from Artie's post on [real-time data for AI](https://www.artie.com/blogs/ai-data-integration).
 
 The demo keeps two copies: the live table, which is about two seconds behind the source, and a snapshot that refreshes every five minutes. If you change a row and ask the same question against both, only the live copy has the new answer.
 
 ### 3. An MCP server
 
-Artie recently shipped an [MCP server](https://github.com/artie-labs/artie-mcp). Reading the repo, I saw that it generates its tools from an OpenAPI spec instead of defining them by hand. I did [the same](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-8-mcp.md) with a spec for my API and used their tool names where the endpoints matched.
+Artie's [MCP server](https://github.com/artie-labs/artie-mcp) generates its tools from an OpenAPI spec instead of defining each one by hand. I built mine [the same way](https://github.com/BABTUNA/SuperBartie/blob/main/docs/phase-8-mcp.md) with a spec for my API and used their tool names where the endpoints matched.
 
 I also added two tools they do not have. `pipeline_verify` compares checksums of every table in both databases, and `destination_ask` searches the vector table.
 
