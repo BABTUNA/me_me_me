@@ -48,7 +48,7 @@ type Usage = {
   writerReachable: boolean;
 };
 
-type Summary = { status: string; hasBackfillingTables: boolean };
+type Summary = { status: string; hasBackfillingTables: boolean; pausedUntil?: string };
 
 type RowView = {
   source: Record<string, unknown> | null;
@@ -102,6 +102,8 @@ export function SuperBartieLive() {
   const [now, setNow] = useState(() => Date.now());
   // which observation step 2 edits, picked by clicking a row in step 1
   const [picked, setPicked] = useState<number>(DEMO_PK);
+  // whether the traffic script is writing, the pause demo needs it on
+  const [trafficOn, setTrafficOn] = useState<boolean | null>(null);
 
   // Poll the numbers. Slow when nothing is happening, faster right after a poke.
   const fastUntil = useRef(0);
@@ -110,14 +112,19 @@ export function SuperBartieLive() {
     let timer: ReturnType<typeof setTimeout>;
     const tick = async () => {
       try {
-        const [u, list] = await Promise.all([
+        const [u, list, tr] = await Promise.all([
           api<Usage>(`/pipelines/${PIPELINE}/usage`),
           api<{ items: Summary[] }>(`/pipelines`),
+          api<{ enabled: boolean }>(`/demo/traffic`),
         ]);
         if (!active) return;
         setUsage(u);
         setSummary(list.items[0] ?? null);
+        setTrafficOn(tr.enabled);
         setOffline(false);
+        // keep polling fast while a timed pause is running and just after it lifts
+        const until = list.items[0]?.pausedUntil;
+        if (until) fastUntil.current = Math.max(fastUntil.current, new Date(until).getTime() + 8000);
       } catch {
         if (active) setOffline(true);
       }
@@ -150,9 +157,21 @@ export function SuperBartieLive() {
       <div className="grid grid-cols-2 gap-px border-b border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-4">
         <Stat label="latency" value={pending ? "…" : avgLatency === null ? "—" : `${avgLatency.toFixed(2)}s`} hint="source commit → destination apply, last hour" />
         <Stat label="reader lag" value={pending ? "…" : kb(usage?.readerLagBytes ?? null)} hint="source WAL ahead of the reader" />
-        <Stat label="backlog" value={pending ? "…" : usage?.backlogMessages === null || usage?.backlogMessages === undefined ? "—" : `${usage.backlogMessages.toLocaleString()} msgs`} hint="published, not yet applied" />
+        <Stat label="backlog" value={pending ? "…" : usage?.backlogMessages === null || usage?.backlogMessages === undefined ? "—" : `${usage.backlogMessages.toLocaleString()} msgs`} hint="published, not yet applied" hot={summary?.status === "paused"} />
         <Stat label="merge p95" value={pending ? "…" : usage?.mergeMs && usage.mergeMs.samples > 0 ? `${usage.mergeMs.p95.toFixed(0)} ms` : "—"} hint="destination MERGE time" />
       </div>
+
+      <PauseRow
+        disabled={offline}
+        now={now}
+        paused={summary?.status === "paused"}
+        pausedUntil={summary?.pausedUntil}
+        trafficOn={trafficOn}
+        onPaused={(until) => {
+          fastUntil.current = new Date(until).getTime() + 8000;
+          setSummary((s) => (s ? { ...s, status: "paused", pausedUntil: until } : s));
+        }}
+      />
 
       <TablePanel disabled={offline} now={now} picked={picked} onPick={setPicked} />
       <Poke disabled={offline} now={now} pk={picked} onReset={() => setPicked(DEMO_PK)} onPoked={() => { fastUntil.current = Date.now() + 15000; }} />
@@ -182,11 +201,63 @@ function Header({ status, offline, backfilling }: { status?: string; offline: bo
   );
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
+function Stat({ label, value, hint, hot }: { label: string; value: string; hint: string; hot?: boolean }) {
   return (
     <div className="bg-[var(--color-surface)] px-4 py-3" title={hint}>
       <div className="num">{label}</div>
-      <div className="mt-1 font-mono text-lg tabular-nums">{value}</div>
+      <div className={`mt-1 font-mono text-lg tabular-nums ${hot ? WARN_TEXT : ""}`}>{value}</div>
+    </div>
+  );
+}
+
+// pauses the writer for a few seconds so the numbers above visibly move
+// the writer resumes on its own, so nobody can leave the demo stuck
+function PauseRow({
+  disabled,
+  now,
+  paused,
+  pausedUntil,
+  trafficOn,
+  onPaused,
+}: {
+  disabled: boolean;
+  now: number;
+  paused: boolean;
+  pausedUntil?: string;
+  trafficOn: boolean | null;
+  onPaused: (until: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const pause = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await api<{ pausedUntil: string }>(`/demo/pause`, { method: "POST" });
+      onPaused(res.pausedUntil);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const left = pausedUntil ? Math.max(0, Math.ceil((new Date(pausedUntil).getTime() - now) / 1000)) : null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[var(--color-border)] px-4 py-3">
+      <Btn onClick={pause} disabled={disabled || busy || paused} subtle busy={busy}>
+        {paused ? (left !== null ? `Writer paused, resumes in ${left}s` : "Writer paused") : "Pause the writer for 15s"}
+      </Btn>
+      <span className="min-w-0 flex-1 text-[11px] text-[var(--color-fg-dim)]">
+        {paused
+          ? "Backlog is going up and reader lag is not. That means the writer is the slow part."
+          : trafficOn === false
+            ? "Turn traffic on first. With no new rows there is nothing to back up."
+            : "Stops the writer so you can watch the backlog build. It resumes on its own."}
+      </span>
+      {err ? <span className={`text-xs ${ERR_TEXT}`} role="alert">{err}</span> : null}
     </div>
   );
 }
